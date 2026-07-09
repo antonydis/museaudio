@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf8f3">
+<meta name="description" content="MuseAudio — audioguide multilingue pour vos visites au musée">
+<title>MuseAudio</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* base editorial clara (navegación) */
+  --paper:#faf8f3;
+  --card:#ffffff;
+  --txt:#191919;
+  --dim:#63635e;
+  --line:rgba(25,25,25,.12);
+  --acc:#8a6428;        /* acento sobre claro (por expo) */
+  /* reproductor oscuro (inmersión) */
+  --pk-ink:#111418;
+  --pk-panel:#1d222a;
+  --pk-txt:#efeae0;
+  --pk-dim:#a2a8b0;
+  --glow:#c8964b;       /* acento sobre oscuro (por expo) */
+  --r:18px;
+  --tap:48px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--txt);font-family:'IBM Plex Sans',system-ui,sans-serif;
+  min-height:100dvh;line-height:1.55;font-size:16px}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.serif{font-family:'Marcellus',serif;font-weight:400}
+.eyebrow{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===== medallón: placa numerada de museo ===== */
+.medal{display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-family:'Marcellus',serif;color:var(--acc);
+  border:1.5px solid color-mix(in srgb,var(--acc) 50%,transparent);border-radius:50%;
+  background:color-mix(in srgb,var(--acc) 7%,transparent)}
+.medal.s{width:46px;height:46px;font-size:17px}
+.medal.xl{width:148px;height:148px;font-size:52px;border-width:2px}
+.dark .medal, #now .medal{color:var(--glow);border-color:color-mix(in srgb,var(--glow) 55%,transparent);
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--glow) 14%,transparent),transparent 70%)}
+
+.view{display:none;max-width:560px;margin:0 auto;padding:0 20px 140px}
+.view.on{display:block}
+
+/* ===== idioma ===== */
+#vLang{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px;text-align:center;background:var(--paper)}
+#vLang.on{display:flex}
+#vLang .brand{font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--acc)}
+#vLang h1{font-size:clamp(30px,7.5vw,42px);margin:14px 0 6px;line-height:1.15}
+#vLang p{color:var(--dim);max-width:320px;margin:0 auto 30px;font-size:15px}
+.langGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:440px}
+.langBtn{min-height:56px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 12px;font-size:17px;transition:border-color .15s,transform .1s;box-shadow:0 1px 3px rgba(25,25,25,.05)}
+.langBtn:active{transform:scale(.97)}
+.langBtn:hover{border-color:var(--acc)}
+
+/* ===== barra superior ===== */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 0 4px}
+.top .brand{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--acc);
+  border:none;background:none;padding:12px 0;min-height:var(--tap)}
+.pill{min-height:40px;background:var(--card);border:1px solid var(--line);color:var(--dim);
+  border-radius:999px;padding:8px 16px;font-size:13px}
+.pill:hover{border-color:var(--acc);color:var(--txt)}
+.backRow{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:15px;
+  background:none;border:none;padding:12px 12px 12px 0;min-height:var(--tap)}
+.backRow:hover{color:var(--txt)}
+
+/* ===== landing plataforma ===== */
+.hero{padding:26px 0 8px}
+.hero h1{font-size:clamp(32px,9vw,46px);line-height:1.12;margin:6px 0 12px;letter-spacing:-.01em}
+.hero p{color:var(--dim);font-size:16.5px;max-width:40ch}
+.how{display:flex;flex-direction:column;gap:0;margin:26px 0 8px;border-top:1px solid var(--line)}
+.step{display:flex;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.step .n{font-family:'Marcellus',serif;font-size:22px;color:var(--acc);min-width:28px;text-align:center}
+.step b{display:block;font-weight:600;font-size:15.5px}
+.step span{color:var(--dim);font-size:14px}
+.secTitle{font-family:'Marcellus',serif;font-size:22px;margin:30px 0 14px}
+
+/* ===== tarjetas museo ===== */
+.musCard{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:22px 20px;margin-bottom:12px;box-shadow:0 2px 10px rgba(25,25,25,.06);transition:border-color .15s,transform .12s}
+.musCard:hover{border-color:var(--acc)}
+.musCard:active{transform:scale(.99)}
+.musCard h3{font-family:'Marcellus',serif;font-weight:400;font-size:21px;line-height:1.25;margin:4px 0 3px}
+.musCard .city{color:var(--dim);font-size:14px}
+.musCard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.musCard .n{color:var(--acc);font-size:13px;font-weight:500}
+.musCard .go{color:var(--acc);font-size:14px;font-weight:600}
+.musCard.soonCard{opacity:.65;cursor:default;box-shadow:none;background:transparent;border-style:dashed}
+.musCard.soonCard:hover{border-color:var(--line)}
+
+/* ===== tarjetas expo ===== */
+.expoCard{position:relative;width:100%;text-align:left;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-bottom:12px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(25,25,25,.06);transition:border-color .15s,transform .12s}
+.expoCard::before{content:'';position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--card-acc)}
+.expoCard:hover{border-color:color-mix(in srgb,var(--card-acc) 55%,var(--line))}
+.expoCard:active{transform:scale(.99)}
+.expoCard .eyebrow{color:var(--card-acc)}
+.expoCard h2{font-family:'Marcellus',serif;font-weight:400;font-size:21px;line-height:1.24;margin:6px 0 4px;padding-inline-end:56px}
+.expoCard .tag{color:var(--dim);font-size:14px}
+.expoCard .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.expoCard .dates{color:var(--dim);font-size:12.5px}
+.expoCard .chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:10.5px;letter-spacing:.06em;color:var(--card-acc);border:1px solid color-mix(in srgb,var(--card-acc) 40%,transparent);
+  border-radius:6px;padding:2px 6px;text-transform:uppercase}
+.badge{position:absolute;top:14px;inset-inline-end:14px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  padding:5px 10px;border-radius:999px;color:#fff;background:var(--card-acc)}
+
+/* ===== playlist ===== */
+#vExpo h1{font-size:clamp(24px,6.5vw,31px);margin:8px 0 2px}
+#vExpo .sub{color:var(--dim);font-size:14px}
+.actions{display:flex;gap:10px;margin:18px 0}
+.playAll{flex:1;min-height:56px;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:var(--acc);color:#fff;border:none;border-radius:999px;padding:14px 18px;font-weight:600;font-size:16px;
+  box-shadow:0 4px 14px color-mix(in srgb,var(--acc) 35%,transparent)}
+.playAll:active{transform:scale(.99)}
+.sqBtn{width:56px;min-height:56px;border-radius:var(--r);border:1px solid var(--line);background:var(--card);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--dim)}
+.sqBtn svg{width:20px;height:20px;fill:var(--dim)}
+.sqBtn.on,.sqBtn.done{border-color:var(--acc);color:var(--acc)}
+.sqBtn.on svg,.sqBtn.busy svg,.sqBtn.done svg{fill:var(--acc)}
+ol.works{list-style:none}
+.work{display:flex;gap:13px;align-items:center;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:12px 6px 12px 13px;margin-bottom:10px;cursor:pointer;
+  transition:border-color .15s;user-select:none;-webkit-user-select:none;box-shadow:0 1px 4px rgba(25,25,25,.04)}
+.work:hover{border-color:color-mix(in srgb,var(--acc) 55%,var(--line))}
+.work.active{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 6%,var(--card))}
+.work.dragging{opacity:.45;border-style:dashed}
+.work .info{flex:1;min-width:0}
+.work h3{font-family:'Marcellus',serif;font-weight:400;font-size:17px;line-height:1.3}
+.work .meta{color:var(--dim);font-size:13px;margin-top:2px}
+.work .loc{color:var(--acc);font-size:12px;margin-top:4px}
+.handle{flex-shrink:0;min-width:var(--tap);min-height:var(--tap);display:flex;align-items:center;justify-content:center;
+  color:var(--dim);touch-action:none;cursor:grab;border:none;background:none;font-size:18px;border-radius:12px}
+.eqIcon{display:none;gap:2.5px;align-items:flex-end;height:15px;flex-shrink:0}
+.work.playing .eqIcon{display:flex}
+.eqIcon span{width:3px;background:var(--acc);border-radius:2px;animation:eq 1s ease-in-out infinite}
+.eqIcon span:nth-child(2){animation-delay:.2s}
+.eqIcon span:nth-child(3){animation-delay:.4s}
+@keyframes eq{0%,100%{height:4px}50%{height:15px}}
+.hint{color:var(--dim);font-size:12px;text-align:center;margin:16px 0 0}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:34px 22px;text-align:center;color:var(--dim)}
+.empty .serif{font-size:19px;color:var(--txt);margin-bottom:6px}
+.langNote{color:var(--dim);font-size:12.5px;margin-top:6px}
+.langNote b{color:var(--acc);font-weight:600}
+
+/* ===== mini reproductor (oscuro, Spotify-like) ===== */
+#mini{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:40;
+  display:none;align-items:center;gap:12px;max-width:536px;margin:0 auto;
+  background:rgba(17,20,24,.93);backdrop-filter:blur(16px);color:var(--pk-txt);
+  border:1px solid rgba(239,234,224,.12);border-radius:20px;padding:10px 12px;
+  box-shadow:0 12px 36px rgba(0,0,0,.4);cursor:pointer}
+#mini.open{display:flex}
+#mini .info{flex:1;min-width:0}
+#mini h4{font-family:'Marcellus',serif;font-weight:400;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mini .st{color:var(--pk-dim);font-size:12px}
+#mini .mPlay{min-width:var(--tap);min-height:var(--tap);border:none;background:var(--glow);color:#111418;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#mini .mPlay svg{width:20px;height:20px;fill:currentColor}
+#mini .bar{position:absolute;left:20px;right:20px;bottom:0;height:2px;background:rgba(239,234,224,.14);border-radius:2px;overflow:hidden}
+#mini .bar i{display:block;height:100%;width:0;background:var(--glow)}
+
+/* ===== Now Playing (oscuro inmersivo) ===== */
+#now{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;color:var(--pk-txt);
+  padding:18px 24px calc(26px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(120% 75% at 50% -15%, color-mix(in srgb,var(--glow) 17%,transparent) 0%, transparent 60%),
+    linear-gradient(#171b21,var(--pk-ink));
+  transform:translateY(103%);transition:transform .3s cubic-bezier(.3,.8,.3,1)}
+#now.open{transform:translateY(0)}
+#now .nTop{display:flex;align-items:center;justify-content:space-between}
+#now .nClose{min-width:var(--tap);min-height:var(--tap);background:none;border:none;color:var(--pk-dim);
+  display:flex;align-items:center;justify-content:center}
+#now .nClose svg{width:26px;height:26px;fill:currentColor}
+#now .nExpo{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--glow);
+  text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+#now .nCenter{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:18px;min-height:0;padding:10px 0}
+#now h2{font-size:clamp(23px,6.5vw,30px);line-height:1.22;max-width:22ch}
+#now .nMeta{color:var(--pk-dim);font-size:15px;margin-top:-8px}
+#now .nLoc{color:var(--glow);font-size:13px;margin-top:-10px}
+#seek{width:100%;accent-color:var(--glow);height:5px;cursor:pointer}
+.nTimes{display:flex;justify-content:space-between;font-size:12px;color:var(--pk-dim);margin-top:4px}
+.nControls{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.ctrl{background:none;border:none;color:var(--pk-txt);min-width:var(--tap);min-height:var(--tap);
+  display:flex;align-items:center;justify-content:center;border-radius:14px}
+.ctrl svg{width:30px;height:30px;fill:currentColor}
+.ctrl.giant{background:var(--glow);color:#111418;border-radius:50%;width:78px;height:78px}
+.ctrl.giant svg{width:34px;height:34px}
+.ctrl.giant:active{transform:scale(.96)}
+#speedBtn{font-size:13px;color:var(--pk-dim);border:1px solid rgba(239,234,224,.14);border-radius:999px;
+  background:none;min-width:56px;min-height:40px;padding:6px 10px}
+#txtBtn{font-size:15px}
+#txtBtn.on{color:var(--glow)}
+#nAmb{border:none;background:none;min-width:var(--tap);min-height:var(--tap);border-radius:14px}
+#nAmb svg{width:22px;height:22px;fill:var(--pk-dim)}
+#nAmb.on svg{fill:var(--glow)}
+.ttsNote{font-size:11.5px;color:var(--pk-dim);text-align:center;margin-top:12px;display:none}
+.ttsNote.show{display:block}
+#transcript{display:none;position:absolute;inset:64px 24px 200px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:rgba(17,20,24,.86);backdrop-filter:blur(6px);border:1px solid rgba(239,234,224,.12);
+  border-radius:var(--r);padding:22px 20px;font-size:17px;line-height:1.75;color:var(--pk-txt)}
+#transcript.show{display:block}
+#transcript .tTitle{font-family:'Marcellus',serif;font-size:15px;color:var(--glow);letter-spacing:.06em;margin-bottom:12px}
+
+/* ===== toast ===== */
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);
+  z-index:70;background:#22262c;color:#efeae0;border:1px solid rgba(239,234,224,.14);border-radius:999px;
+  padding:11px 20px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);
+  opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== fin del recorrido ===== */
+#vDone{text-align:center;padding-top:7vh}
+#vDone .medal.xl{margin:0 auto 8px}
+#vDone h1{font-size:clamp(26px,7vw,36px);margin:16px 0 4px}
+#vDone .stats{color:var(--dim);font-size:15px;margin-bottom:28px}
+#vDone .q{font-family:'Marcellus',serif;font-size:19px;margin:26px 0 14px}
+.favGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:start}
+.favBtn{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;
+  min-height:56px;font-size:14px;line-height:1.35;transition:border-color .15s;box-shadow:0 1px 4px rgba(25,25,25,.04)}
+.favBtn:hover{border-color:var(--acc)}
+.favBtn.sel{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 8%,var(--card))}
+.favBtn .fN{font-family:'Marcellus',serif;color:var(--acc);margin-inline-end:7px}
+.thanks{color:var(--acc);font-size:14px;margin-top:14px;min-height:20px}
+.doneActions{display:flex;flex-direction:column;gap:10px;margin-top:28px}
+.btnPrimary{min-height:56px;background:var(--acc);color:#fff;border:none;border-radius:999px;
+  font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px}
+.btnGhost{min-height:52px;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:999px;font-size:15px}
+.btnGhost:hover{border-color:var(--acc)}
+.mailRow{display:flex;gap:8px;margin-top:10px}
+.mailRow input{flex:1;min-height:52px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  color:var(--txt);font:inherit;font-size:15px;padding:0 16px}
+.mailRow input::placeholder{color:var(--dim)}
+.mailRow button{min-width:56px;min-height:52px;border-radius:14px;border:none;background:var(--acc);color:#fff;font-weight:600}
+.mailNote{color:var(--dim);font-size:12px;margin-top:8px}
+.mailNote a{color:var(--acc)}
+
+/* ===== footer legal ===== */
+.legalFoot{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+  color:var(--dim);font-size:12.5px;line-height:1.6;text-align:center}
+.legalFoot a{color:var(--acc);text-decoration:none}
+</style>
+</head>
+<body>
+
+<!-- 1 · Idioma -->
+<section id="vLang" aria-label="language selection">
+  <div class="brand">MuseAudio</div>
+  <h1 class="serif" id="langTitle">Votre visite, dans votre langue</h1>
+  <p id="langSub">Choisissez la langue de votre parcours audio</p>
+  <div class="langGrid" id="langGrid"></div>
+</section>
+
+<!-- 2 · Landing plataforma + museos -->
+<section class="view" id="vHome">
+  <div class="top">
+    <button class="brand" id="brandBtn">MuseAudio</button>
+    <button class="pill" id="langSwitch"></button>
+  </div>
+  <div class="hero">
+    <div class="eyebrow" data-i18n="heroEyebrow"></div>
+    <h1 class="serif" data-i18n="heroTitle"></h1>
+    <p data-i18n="heroSub"></p>
+  </div>
+  <div class="how">
+    <div class="step"><div class="n">I</div><div><b data-i18n="s1"></b><span data-i18n="s1s"></span></div></div>
+    <div class="step"><div class="n">II</div><div><b data-i18n="s2"></b><span data-i18n="s2s"></span></div></div>
+    <div class="step"><div class="n">III</div><div><b data-i18n="s3"></b><span data-i18n="s3s"></span></div></div>
+  </div>
+  <h2 class="secTitle" data-i18n="museums"></h2>
+  <div id="musCards"></div>
+  <footer class="legalFoot"><span id="footTxt"></span> <a href="legal.html" id="footLink"></a></footer>
+</section>
+
+<!-- 3 · Museo: exposiciones -->
+<section class="view" id="vMuseum">
+  <div class="top">
+    <button class="backRow" id="backHome">←&nbsp;<span data-i18n="back"></span></button>
+    <button class="pill" id="langSwitch2"></button>
+  </div>
+  <div class="eyebrow" id="musEyebrow"></div>
+  <h1 class="serif" id="musTitle" style="font-size:clamp(26px,7vw,34px);margin:8px 0 2px"></h1>
+  <div style="color:var(--dim);font-size:14px" id="musCity"></div>
+  <h2 class="secTitle" data-i18n="exhibitions"></h2>
+  <div id="expoCards"></div>
+</section>
+
+<!-- 4 · Exposición: playlist -->
+<section class="view" id="vExpo">
+  <div class="top">
+    <button class="backRow" id="backMus">←&nbsp;<span id="backMusTxt"></span></button>
+    <button class="pill" id="langSwitch3"></button>
+  </div>
+  <div class="eyebrow" id="expoEyebrow"></div>
+  <h1 class="serif" id="expoTitle"></h1>
+  <div class="sub" id="expoSub"></div>
+  <div class="langNote" id="langNote"></div>
+  <div class="actions" id="expoActions">
+    <button class="playAll" id="playAllBtn">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <span data-i18n="playAll"></span>
+    </button>
+    <button class="sqBtn" id="ambBtn" aria-label="ambient music" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+    </button>
+    <button class="sqBtn" id="dlBtn" aria-label="download tour">
+      <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM12 2v12l-4.5-4.5L6 11l6 6 6-6-1.5-1.5L12 14V2z"/></svg>
+      <span id="dlSt"></span>
+    </button>
+  </div>
+  <ol class="works" id="worksList"></ol>
+  <div class="hint" id="reorderHint"></div>
+</section>
+
+<!-- 5 · Fin del recorrido -->
+<section class="view" id="vDone">
+  <div class="medal xl">✓</div>
+  <h1 class="serif" id="doneTitle"></h1>
+  <div class="stats" id="doneStats"></div>
+  <div class="q" id="favQ"></div>
+  <div class="favGrid" id="favGrid"></div>
+  <div class="thanks" id="favThanks"></div>
+  <div class="doneActions">
+    <button class="btnPrimary" id="shareBtn"></button>
+    <button class="btnGhost" id="moreBtn"></button>
+  </div>
+  <div class="q" id="mailQ"></div>
+  <div class="mailRow"><input type="email" id="mailIn" autocomplete="email" inputmode="email"><button id="mailBtn" aria-label="subscribe">→</button></div>
+  <div class="mailNote" id="mailNote"></div>
+</section>
+
+<!-- Mini reproductor -->
+<div id="mini" role="button" aria-label="open player">
+  <div class="medal s" id="miniMedal"></div>
+  <div class="info"><h4 id="miniTitle"></h4><div class="st" id="miniSt"></div></div>
+  <button class="mPlay" id="miniPlay" aria-label="play/pause">
+    <svg id="miniIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+  <div class="bar"><i id="miniBar"></i></div>
+</div>
+
+<!-- Now Playing -->
+<section id="now" aria-label="now playing">
+  <div class="nTop">
+    <button class="nClose" id="nowClose" aria-label="minimize">
+      <svg viewBox="0 0 24 24"><path d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6z"/></svg>
+    </button>
+    <div class="nExpo" id="nExpo"></div>
+    <button id="nAmb" aria-label="ambient music" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+    </button>
+  </div>
+  <div id="transcript" aria-live="polite"><div class="tTitle" id="tTitleTxt"></div><div id="tBody"></div></div>
+  <div class="nCenter">
+    <div class="medal xl" id="nowMedal"></div>
+    <h2 class="serif" id="nTitle"></h2>
+    <div class="nMeta" id="nMeta"></div>
+    <div class="nLoc" id="nLoc"></div>
+  </div>
+  <div>
+    <input type="range" id="seek" min="0" max="100" value="0" step="0.1" aria-label="seek">
+    <div class="nTimes"><span id="tCur">0:00</span><span id="tTot">–:––</span></div>
+    <div class="nControls">
+      <button class="ctrl" id="speedBtn" aria-label="playback speed">1×</button>
+      <button class="ctrl" id="prevBtn" aria-label="previous"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="ctrl giant" id="playBtn" aria-label="play/pause"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="ctrl" id="nextBtn" aria-label="next"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+      <button class="ctrl" id="txtBtn" aria-label="transcript" aria-pressed="false">Aa</button>
+    </div>
+    <div class="ttsNote" id="ttsNote"></div>
+  </div>
+</section>
+
+<div id="toast" role="status"></div>
+
+<script id="ma-data">window.MA={"museums":[{"id":"mbam","short":"MBAM","name":{"fr":"Musée des beaux-arts de Montréal","en":"Montreal Museum of Fine Arts","es":"Museo de Bellas Artes de Montreal","ar":"متحف مونتريال للفنون الجميلة","zh":"蒙特利尔美术馆","tl":"Museo ng Sining ng Montreal","pt":"Museu de Belas-Artes de Montreal","it":"Museo di belle arti di Montréal"},"city":{"fr":"Montréal, Québec","en":"Montreal, Quebec","es":"Montreal, Quebec","ar":"مونتريال، كيبيك","zh":"魁北克省蒙特利尔","tl":"Montreal, Quebec","pt":"Montreal, Quebec","it":"Montréal, Québec"},"expos":["enpiste","torlonia","horssocle"]}],"expos":{"enpiste":{"title":{"fr":"En piste ! Les sports inspirent l'art","en":"On Track! Sports Inspire Art","es":"¡En pista! El deporte inspira el arte","ar":"إلى الميدان! الرياضة تلهم الفن","zh":"上场吧！体育激发艺术","tl":"Sa Larangan! Ang Isports ay Inspirasyon ng Sining","pt":"Em pista! O esporte inspira a arte","it":"In pista! Lo sport ispira l'arte"},"dates":{"fr":"Jusqu'au 12 octobre 2026","en":"Until October 12, 2026","es":"Hasta el 12 de octubre de 2026","ar":"حتى 12 أكتوبر 2026","zh":"至2026年10月12日","tl":"Hanggang Oktubre 12, 2026","pt":"Até 12 de outubro de 2026","it":"Fino al 12 ottobre 2026"},"tag":{"fr":"Parcours dans tout le musée","en":"Trail across the museum","es":"Recorrido por todo el museo","ar":"مسار عبر أرجاء المتحف","zh":"贯穿全馆的寻访路线","tl":"Paglalakbay sa buong museo","pt":"Percurso por todo o museu","it":"Percorso in tutto il museo"},"status":"live","numerals":"arabic","accent":"#e0532c","accentUI":"#b23c1c","ambient":"audio/ambient_enpiste.mp3","langs":["fr","en","es"]},"torlonia":{"title":{"fr":"La collection Torlonia","en":"The Torlonia Collection","es":"La colección Torlonia","ar":"مجموعة تورلونيا","zh":"托尔洛尼亚收藏","tl":"Ang Koleksiyong Torlonia","pt":"A coleção Torlonia","it":"La collezione Torlonia"},"dates":{"fr":"Jusqu'au 19 juillet 2026","en":"Until July 19, 2026","es":"Hasta el 19 de julio de 2026","ar":"حتى 19 يوليو 2026","zh":"至2026年7月19日","tl":"Hanggang Hulyo 19, 2026","pt":"Até 19 de julho de 2026","it":"Fino al 19 luglio 2026"},"tag":{"fr":"Chefs-d'œuvre de la sculpture romaine","en":"Masterpieces of Roman sculpture","es":"Obras maestras de la escultura romana","ar":"روائع النحت الروماني","zh":"罗马雕塑杰作","tl":"Mga obra maestra ng eskulturang Romano","pt":"Obras-primas da escultura romana","it":"Capolavori della scultura romana"},"status":"closing","numerals":"arabic","accent":"#c8964b","accentUI":"#8a6428","ambient":"audio/ambient_torlonia.mp3","langs":["fr","en","es"]},"horssocle":{"title":{"fr":"Hors socle","en":"Off the Pedestal","es":"Fuera del pedestal","ar":"خارج القاعدة","zh":"走下基座","tl":"Labas sa Pedestal","pt":"Fora do pedestal","it":"Fuori dal piedistallo"},"dates":{"fr":"Jusqu'au 7 mars 2027","en":"Until March 7, 2027","es":"Hasta el 7 de marzo de 2027","ar":"حتى 7 مارس 2027","zh":"至2027年3月7日","tl":"Hanggang Marso 7, 2027","pt":"Até 7 de março de 2027","it":"Fino al 7 marzo 2027"},"tag":{"fr":"La sculpture depuis les années 1960","en":"Sculpture since the 1960s","es":"La escultura desde los años 1960","ar":"النحت منذ ستينيات القرن العشرين","zh":"1960年代以来的雕塑","tl":"Eskultura mula noong dekada 1960","pt":"A escultura desde os anos 1960","it":"La scultura dagli anni Sessanta"},"status":"live","numerals":"arabic","accent":"#8fb5c4","accentUI":"#41748a","ambient":"audio/ambient_horssocle.mp3","langs":["fr","en","es"]}},"works":{"enpiste":[{"id":"sprint","placeholder":true,"meta":{"fr":{"t":"Le sprint","m":"Bronze · 1948"},"en":{"t":"The Sprint","m":"Bronze · 1948"},"es":{"t":"El sprint","m":"Bronce · 1948"}},"loc":{"fr":"Pavillon Jean-Noël Desmarais · niveau 2","en":"Jean-Noël Desmarais Pavilion · Level 2","es":"Pabellón Jean-Noël Desmarais · nivel 2"},"txt":{"fr":"Un coureur figé au moment précis où son pied quitte le sol. Le bronze capte ce que l'œil ne voit jamais : l'instant suspendu entre deux foulées. Le sculpteur a travaillé d'après des photographies de course, héritage direct des études du mouvement qui fascinaient les artistes du vingtième siècle.","en":"A runner frozen at the precise moment his foot leaves the ground. The bronze captures what the eye never sees: the suspended instant between two strides. The sculptor worked from racing photographs, a direct legacy of the motion studies that fascinated twentieth-century artists.","es":"Un corredor congelado en el momento preciso en que su pie deja el suelo. El bronce capta lo que el ojo nunca ve: el instante suspendido entre dos zancadas. El escultor trabajó a partir de fotografías de carreras, herencia directa de los estudios del movimiento que fascinaban a los artistas del siglo veinte."}},{"id":"patineurs","placeholder":true,"meta":{"fr":{"t":"Patineurs au parc La Fontaine","m":"Huile sur toile · 1937"},"en":{"t":"Skaters at La Fontaine Park","m":"Oil on canvas · 1937"},"es":{"t":"Patinadores en el parque La Fontaine","m":"Óleo sobre lienzo · 1937"}},"loc":{"fr":"Pavillon Claire et Marc Bourgie · niveau 3","en":"Claire and Marc Bourgie Pavilion · Level 3","es":"Pabellón Claire et Marc Bourgie · nivel 3"},"txt":{"fr":"Sous un ciel d'hiver montréalais, des silhouettes glissent sur la glace du parc La Fontaine. Le sport ici n'est pas une compétition : c'est un rituel collectif, presque une danse. Remarquez comme la lumière basse de l'après-midi transforme la glace en miroir rose et gris.","en":"Under a Montreal winter sky, silhouettes glide across the ice of La Fontaine Park. Sport here is not a competition: it is a collective ritual, almost a dance. Notice how the low afternoon light turns the ice into a mirror of pink and grey.","es":"Bajo un cielo de invierno montrealés, unas siluetas se deslizan sobre el hielo del parque La Fontaine. El deporte aquí no es competencia: es un ritual colectivo, casi una danza. Observe cómo la luz baja de la tarde convierte el hielo en un espejo rosa y gris."}},{"id":"gymnaste","placeholder":true,"meta":{"fr":{"t":"Gymnaste au repos","m":"Épreuve argentique · 1976"},"en":{"t":"Gymnast at Rest","m":"Gelatin silver print · 1976"},"es":{"t":"Gimnasta en reposo","m":"Copia a la gelatina de plata · 1976"}},"loc":{"fr":"Pavillon Jean-Noël Desmarais · niveau 1","en":"Jean-Noël Desmarais Pavilion · Level 1","es":"Pabellón Jean-Noël Desmarais · nivel 1"},"txt":{"fr":"Montréal, été 1976. Entre deux épreuves olympiques, une gymnaste s'assoit, les mains poudrées de magnésie. Le photographe n'a pas choisi l'exploit mais l'attente : c'est là, dit cette image, que vit le sport, dans la concentration silencieuse avant le geste parfait.","en":"Montreal, summer 1976. Between two Olympic events, a gymnast sits down, her hands dusted with chalk. The photographer chose not the feat but the waiting: this, the image says, is where sport truly lives, in the silent concentration before the perfect move.","es":"Montreal, verano de 1976. Entre dos pruebas olímpicas, una gimnasta se sienta, con las manos empolvadas de magnesia. El fotógrafo no eligió la hazaña sino la espera: ahí, dice esta imagen, vive el deporte, en la concentración silenciosa antes del gesto perfecto."}},{"id":"velodrome","placeholder":true,"meta":{"fr":{"t":"Vélodrome","m":"Sérigraphie · 1975"},"en":{"t":"Velodrome","m":"Screen print · 1975"},"es":{"t":"Velódromo","m":"Serigrafía · 1975"}},"loc":{"fr":"Pavillon Liliane et David M. Stewart · niveau 2","en":"Liliane and David M. Stewart Pavilion · Level 2","es":"Pabellón Liliane et David M. Stewart · nivel 2"},"txt":{"fr":"Des courbes pures, une piste qui s'enroule sur elle-même : cette sérigraphie célèbre le vélodrome olympique de Montréal un an avant les Jeux. L'artiste réduit l'architecture à sa géométrie essentielle. Ce bâtiment existe toujours : vous le connaissez aujourd'hui sous le nom de Biodôme.","en":"Pure curves, a track coiling upon itself: this screen print celebrates Montreal's Olympic velodrome one year before the Games. The artist reduces the architecture to its essential geometry. The building still exists: you know it today as the Biodôme.","es":"Curvas puras, una pista que se enrolla sobre sí misma: esta serigrafía celebra el velódromo olímpico de Montreal un año antes de los Juegos. El artista reduce la arquitectura a su geometría esencial. El edificio todavía existe: hoy lo conoce como el Biodôme."}},{"id":"plongeon","placeholder":true,"meta":{"fr":{"t":"Le plongeon","m":"Aquarelle · 1932"},"en":{"t":"The Dive","m":"Watercolour · 1932"},"es":{"t":"El clavado","m":"Acuarela · 1932"}},"loc":{"fr":"Pavillon Michal et Renata Hornstein · niveau 2","en":"Michal and Renata Hornstein Pavilion · Level 2","es":"Pabellón Michal et Renata Hornstein · nivel 2"},"txt":{"fr":"Un corps en arc au-dessus de l'eau, peint en quelques touches transparentes. L'aquarelle, technique de l'instant, épouse parfaitement son sujet : un plongeon ne dure qu'une seconde, et cette peinture semble avoir été faite dans le même temps. L'eau n'est même pas représentée : elle est suggérée par le vide.","en":"A body arcing above the water, painted in a few transparent strokes. Watercolour, the medium of the instant, perfectly matches its subject: a dive lasts only a second, and this painting seems to have been made in the same span. The water itself is not even depicted: it is suggested by emptiness.","es":"Un cuerpo en arco sobre el agua, pintado en pocas pinceladas transparentes. La acuarela, técnica del instante, se ajusta perfectamente a su tema: un clavado dura solo un segundo, y esta pintura parece hecha en ese mismo tiempo. El agua ni siquiera está representada: la sugiere el vacío."}},{"id":"hockey","placeholder":true,"meta":{"fr":{"t":"Hockey de ruelle","m":"Huile sur panneau · 1958"},"en":{"t":"Alley Hockey","m":"Oil on panel · 1958"},"es":{"t":"Hockey de callejón","m":"Óleo sobre tabla · 1958"}},"loc":{"fr":"Pavillon Claire et Marc Bourgie · niveau 2","en":"Claire and Marc Bourgie Pavilion · Level 2","es":"Pabellón Claire et Marc Bourgie · nivel 2"},"txt":{"fr":"Pas de patinoire, pas d'uniformes : une ruelle enneigée, des bâtons dépareillés et la passion pure. Cette scène raconte le hockey comme les Montréalais l'ont vraiment vécu, entre les escaliers en colimaçon et les cordes à linge. Le but ? Deux bancs de neige. La coupe Stanley ? Dans la tête de chaque enfant.","en":"No rink, no uniforms: a snowy alley, mismatched sticks, and pure passion. This scene tells hockey as Montrealers truly lived it, between spiral staircases and clotheslines. The goal? Two snowbanks. The Stanley Cup? In every child's head.","es":"Sin pista, sin uniformes: un callejón nevado, palos desparejos y pasión pura. Esta escena cuenta el hockey como los montrealeses realmente lo vivieron, entre escaleras de caracol y cuerdas de ropa. ¿La portería? Dos bancos de nieve. ¿La copa Stanley? En la cabeza de cada niño."}}],"torlonia":[{"id":"leda-swan-giustiniani","meta":{"fr":{"t":"Léda et le cygne","m":"1re moitié du 2e s. · Collection Giustiniani"},"en":{"t":"Leda and the Swan","m":"First half of 2nd c. · Giustiniani Collection"},"es":{"t":"Leda y el cisne","m":"1.ª mitad del s. II · Colección Giustiniani"}},"txt":{"fr":"Zeus, épris de la reine Léda, se transforme en cygne pour l'approcher : c'est l'un des mythes de séduction les plus représentés de l'Antiquité, et les Romains en firent une version fondée sur un modèle grec plus ancien, reproduite par des ateliers entiers à partir de gabarits et de mesures standardisées, un peu comme une chaîne de production du beau. Ce marbre fut découvert en 1623 sur la Piazza di Mario, juste au sud de Velletri, avant d'entrer dans la collection du cardinal Giustiniani. Vous croiserez une seconde Léda plus loin dans le parcours : une bonne occasion de comparer deux interprétations d'un même sujet, à un siècle d'écart.","en":"Zeus, smitten with Queen Leda, turns himself into a swan to approach her — one of antiquity's most popular seduction myths. The Romans based their version on an older Greek model and mass-produced it using workshop patterns and standardized measurements, not unlike an assembly line for beauty. This marble surfaced in 1623 in the Piazza di Mario, just south of Velletri, before entering Cardinal Giustiniani's collection. You'll meet a second Leda later in the tour — a good chance to compare two takes on the same subject, a century apart.","es":"Zeus, prendado de la reina Leda, se transforma en cisne para acercarse a ella: uno de los mitos de seducción más representados de la Antigüedad. Los romanos basaron su versión en un modelo griego más antiguo y la reprodujeron en serie con plantillas y medidas estandarizadas de taller, casi como una cadena de producción de la belleza. Este mármol apareció en 1623 en la Piazza di Mario, justo al sur de Velletri, antes de entrar en la colección del cardenal Giustiniani. Más adelante en el recorrido encontrará una segunda Leda: una buena ocasión para comparar dos versiones del mismo tema, con un siglo de diferencia."}},{"id":"gaius-marcius","meta":{"fr":{"t":"Monument funéraire de Gaius Marcius Crescens","m":"2e s. · Trouvé à Porto (Portus)"},"en":{"t":"Funerary Monument of Gaius Marcius Crescens","m":"2nd c. · Found in Porto (Portus)"},"es":{"t":"Monumento funerario de Gaius Marcius Crescens","m":"s. II · Hallado en Porto (Portus)"}},"txt":{"fr":"L'inscription sous ce portrait précise que le garçon est mort à quatorze ans et neuf heures. Pas quatorze ans : quatorze ans et neuf heures. Cette précision presque insoutenable en dit plus sur le chagrin de ses parents que n'importe quelle épitaphe élaborée. La mortalité infantile était omniprésente dans l'Antiquité, et les familles qui en avaient les moyens élevaient des monuments comme celui-ci, puis revenaient s'y recueillir à l'anniversaire de l'enfant ou lors des fêtes rituelles dédiées aux morts. Ce marbre n'est pas un simple portrait : c'est un lieu de mémoire qu'une famille romaine a visité, année après année.","en":"The inscription beneath this portrait notes that the boy died at fourteen years and nine hours. Not fourteen years: fourteen years and nine hours. That almost unbearable precision says more about his parents' grief than any elaborate epitaph could. Child mortality was a constant presence in antiquity, and families who could afford it raised monuments like this one, then returned to it on the boy's birthday and on ritual feast days for the dead. This marble isn't just a portrait — it's a place a Roman family kept coming back to, year after year.","es":"La inscripción bajo este retrato precisa que el niño murió a los catorce años y nueve horas. No catorce años: catorce años y nueve horas. Esa precisión casi insoportable dice más sobre el duelo de sus padres que cualquier epitafio elaborado. La mortalidad infantil era una presencia constante en la Antigüedad, y las familias con recursos levantaban monumentos como este para volver a visitarlo en el cumpleaños del niño o en las fiestas rituales dedicadas a los muertos. Este mármol no es solo un retrato: es un lugar al que una familia romana regresó, año tras año."}},{"id":"medusa-trapezophoroi","meta":{"fr":{"t":"Deux pieds de table à tête de Méduse","m":"2e s. · Collection Giustiniani"},"en":{"t":"Two Medusa Table Legs","m":"2nd c. · Giustiniani Collection"},"es":{"t":"Dos patas de mesa con cabeza de Medusa","m":"s. II · Colección Giustiniani"}},"txt":{"fr":"Deux têtes de Méduse, l'une couronnant un griffon, l'autre un lion, ornaient les pieds d'une même table romaine de luxe : un trapézophore. Le type est dit Rondanini, du nom d'un modèle célèbre : après Persée, la Gorgone n'est plus montrée comme un monstre grimaçant mais comme un visage étrangement serein aux yeux mi-clos, une beauté figée par sa propre mort. Remarquez que les deux têtes ne sont pas parfaitement identiques : l'une est une pièce ancienne, l'autre une réplique fabriquée plus tard pour compléter la paire, à une époque où les collectionneurs préféraient un ensemble complet à deux moitiés dépareillées.","en":"Two heads of Medusa, one crowning a griffin, the other a lion, once decorated the legs of the same luxury Roman table — a trapezophoros. The type is called Rondanini, after a famous model: after Perseus's blow, the Gorgon is no longer shown as a snarling monster but as a strangely serene face with half-closed eyes, beauty frozen by its own death. Look closely and the two heads aren't quite identical — one is ancient, the other a later replica made to complete the pair, from an era when collectors preferred a matching set over two mismatched halves.","es":"Dos cabezas de Medusa, una coronando un grifo y la otra un león, decoraban las patas de una misma mesa romana de lujo: un trapezóforo. El tipo se llama Rondanini, por un modelo célebre: tras el golpe de Perseo, la Gorgona ya no se representa como un monstruo que gruñe, sino como un rostro extrañamente sereno de ojos entornados, una belleza congelada por su propia muerte. Fíjese en que las dos cabezas no son idénticas: una es antigua, la otra una réplica fabricada después para completar el par, en una época en que los coleccionistas preferían un conjunto completo a dos mitades desparejadas."}},{"id":"germanicus","meta":{"fr":{"t":"Statue de Germanicus","m":"1er s. · Bronze · Fouilles Torlonia de 1874"},"en":{"t":"Statue of Germanicus","m":"1st c. · Bronze · 1874 Torlonia excavation"},"es":{"t":"Estatua de Germánico","m":"s. I · Bronce · Excavación Torlonia de 1874"}},"txt":{"fr":"Sur plus de six cents sculptures que compte la collection Torlonia, une seule est en bronze : celle-ci. Le bronze romain a presque entièrement disparu parce qu'il valait cher et se refondait facilement — armes, pièces de monnaie, cloches d'église ont recyclé des milliers de statues antiques au fil des siècles. Celle-ci n'a survécu que parce qu'elle est restée enfouie, oubliée, jusqu'à sa découverte en 1874 sur le domaine Torlonia de Sabine, l'antique Cures. Le buste et la jambe fléchie sont authentiquement anciens ; la tête, les bras et le drapé du socle sont des restaurations, tenus ensemble par une armature de fer complexe cachée à l'intérieur. Le visage pourrait être celui de Germanicus, général romain et frère de l'empereur Claude.","en":"Of more than six hundred sculptures in the Torlonia Collection, exactly one is bronze — this one. Roman bronze has almost entirely vanished because the metal was valuable and endlessly recyclable: weapons, coins, and church bells melted down thousands of ancient statues over the centuries. This one survived only because it stayed buried and forgotten until its discovery in 1874 on the Torlonia estate in the Sabine hills, ancient Cures. The torso and bent leg are genuinely ancient; the head, arms, and draped base are restorations, held together by a hidden iron framework inside. The face may belong to Germanicus, a Roman general and brother of the emperor Claudius.","es":"De más de seiscientas esculturas que reúne la colección Torlonia, exactamente una es de bronce: esta. El bronce romano casi ha desaparecido por completo porque el metal era valioso y se podía refundir sin fin: armas, monedas, campanas de iglesia reciclaron miles de estatuas antiguas a lo largo de los siglos. Esta sobrevivió solo porque quedó enterrada y olvidada hasta su descubrimiento en 1874 en la finca Torlonia de la Sabina, la antigua Cures. El torso y la pierna flexionada son auténticamente antiguos; la cabeza, los brazos y el drapeado de la base son restauraciones, sostenidas por una armadura de hierro oculta en su interior. El rostro podría pertenecer a Germánico, general romano y hermano del emperador Claudio."}},{"id":"leda-swan-portus","meta":{"fr":{"t":"Léda et le cygne (seconde version)","m":"Fin du 2e s. · Fouilles Torlonia de 1864 à Portus"},"en":{"t":"Leda and the Swan (second version)","m":"Late 2nd c. · 1864 Torlonia excavation at Portus"},"es":{"t":"Leda y el cisne (segunda versión)","m":"Fines del s. II · Excavación Torlonia de 1864 en Portus"}},"txt":{"fr":"Voici la seconde Léda du parcours, sculptée près d'un demi-siècle après la première que vous avez peut-être déjà croisée. Même mythe, même geste de la reine accueillant le cygne, mais un marbre différent — pentélique celui-ci — et une découverte bien documentée : elle fut mise au jour en 1864 lors des fouilles Torlonia du Palazzo Imperiale, au cœur de l'ancien port de Portus. Comparer les deux versions révèle à quel point un même sujet pouvait être décliné, chaque atelier romain interprétant légèrement la pose, le drapé ou l'expression selon la commande.","en":"Here's the tour's second Leda, carved nearly half a century after the first one you may already have passed. Same myth, same gesture of the queen welcoming the swan, but a different marble this time — Pentelic — and a well-documented find: it surfaced in 1864 during the Torlonia excavations of the Palazzo Imperiale, in the heart of ancient Portus. Comparing the two versions shows how freely a single subject could be reworked, each Roman workshop tweaking the pose, drapery, or expression to suit the commission.","es":"Esta es la segunda Leda del recorrido, esculpida casi medio siglo después de la primera que quizás ya vio. Mismo mito, mismo gesto de la reina acogiendo al cisne, pero un mármol distinto —pentélico esta vez— y un hallazgo bien documentado: salió a la luz en 1864 durante las excavaciones Torlonia del Palazzo Imperiale, en el corazón del antiguo puerto de Portus. Comparar ambas versiones muestra cuánto podía reinterpretarse un mismo tema: cada taller romano ajustaba ligeramente la pose, el drapeado o la expresión según el encargo."}},{"id":"hercules-sarcophagus-thasian","meta":{"fr":{"t":"Sarcophage aux travaux d'Hercule","m":"V. 160-170 · Marbre de Thasos · Via Latina"},"en":{"t":"Sarcophagus with the Labours of Hercules","m":"About 160–170 · Thasian marble · Via Latina"},"es":{"t":"Sarcófago con los trabajos de Hércules","m":"H. 160-170 · Mármol de Tasos · Vía Latina"}},"txt":{"fr":"Hercule affronte tour à tour le lion de Némée, l'hydre, le sanglier : ses douze travaux couvrent ce sarcophage massif comme une bande dessinée antique. Pourquoi choisir ce héros pour un tombeau ? Parce qu'Hercule est le mythe romain de la souffrance surmontée : après une vie d'épreuves, il gagne l'immortalité parmi les dieux. Pour une famille en deuil, c'était un espoir sculpté dans la pierre — et pour les vivants qui payaient, un marqueur de statut social assumé, taillé dans un marbre de Thasos importé à grands frais depuis une île grecque de la mer Égée.","en":"Hercules battles the Nemean lion, the hydra, the boar, one after another: his twelve labours wrap around this massive sarcophagus like an ancient comic strip. Why choose this hero for a tomb? Because Hercules is Rome's myth of suffering overcome — after a lifetime of trials, he wins immortality among the gods. For a grieving family, that was hope carved into stone. For the living who paid for it, it was also an unmistakable status marker, cut from Thasian marble imported at great expense from a Greek island in the Aegean Sea.","es":"Hércules se enfrenta, uno tras otro, al león de Nemea, la hidra, el jabalí: sus doce trabajos envuelven este sarcófago masivo como un cómic de la Antigüedad. ¿Por qué elegir a este héroe para una tumba? Porque Hércules es el mito romano del sufrimiento superado: tras una vida de pruebas, gana la inmortalidad entre los dioses. Para una familia de luto, era una esperanza tallada en piedra; y para quienes pagaban el encargo, un marcador de estatus social sin disimulo, labrado en mármol de Tasos importado a gran costo desde una isla griega del mar Egeo."}},{"id":"resting-goat-bernini","meta":{"fr":{"t":"Bouc au repos, tête attribuée au Bernin","m":"Corps : fin 1er s. · Tête : v. 1620 · Collection Giustiniani"},"en":{"t":"Resting Goat, head attributed to Bernini","m":"Body: late 1st c. · Head: c. 1620 · Giustiniani Collection"},"es":{"t":"Cabra en reposo, cabeza atribuida a Bernini","m":"Cuerpo: fines s. I · Cabeza: h. 1620 · Colección Giustiniani"}},"txt":{"fr":"Cette sculpture réunit deux artistes séparés par presque seize siècles. Le corps antique du bouc, sans tête, appartient à l'époque de Trajan. Vers 1620, le marquis Vincenzo Giustiniani confie sa restauration à un sculpteur encore inconnu : le jeune Gian Lorenzo Bernini, tout juste vingt ans, qui deviendra le plus grand génie du baroque romain. Bernini invente une tête entière, couverte de boucles vivantes, avant même d'avoir sculpté la moindre œuvre qui le rendra célèbre. Les Torlonia n'ont pas commandé cette restauration : ils ont hérité de la collection Giustiniani presque deux siècles plus tard, en réglant une dette de famille — un bouc en marbre comme note de crédit.","en":"This sculpture brings together two artists separated by nearly sixteen centuries. The goat's headless ancient body belongs to the age of Trajan. Around 1620, the marquis Vincenzo Giustiniani handed its restoration to a still-unknown sculptor: the twenty-year-old Gian Lorenzo Bernini, decades before he became the towering genius of Roman Baroque. Bernini invented an entire head, covered in lively curls, before he had carved a single work that would make him famous. The Torlonias never commissioned this restoration — they inherited the whole Giustiniani collection almost two centuries later, settling a family debt with it. A marble goat, as a receipt.","es":"Esta escultura reúne a dos artistas separados por casi dieciséis siglos. El cuerpo antiguo de la cabra, sin cabeza, pertenece a la época de Trajano. Hacia 1620, el marqués Vincenzo Giustiniani encarga su restauración a un escultor todavía desconocido: el joven Gian Lorenzo Bernini, de apenas veinte años, que llegaría a ser el gran genio del barroco romano. Bernini inventa una cabeza completa, cubierta de rizos vivos, antes incluso de haber esculpido la obra que lo haría famoso. Los Torlonia no encargaron esta restauración: heredaron toda la colección Giustiniani casi dos siglos después, al saldar una deuda familiar. Una cabra de mármol, a modo de recibo."}},{"id":"husband-wife","meta":{"fr":{"t":"Mari et femme","m":"2e s. · Marbre de Luni · Collection Giustiniani"},"en":{"t":"Husband and Wife","m":"2nd c. · Luna marble · Giustiniani Collection"},"es":{"t":"Marido y mujer","m":"s. II · Mármol de Luna · Colección Giustiniani"}},"txt":{"fr":"Regardez leurs mains droites, jointes au centre du groupe. Ce geste a un nom en latin, la dextrarum iunctio, et il résume tout : c'est le symbole romain de la fidélité conjugale et de l'harmonie du couple, aussi reconnaissable pour un Romain que l'alliance l'est pour nous. Ce portrait double, probablement funéraire, ne cherche pas la ressemblance individuelle autant que l'idéal du couple uni jusque dans la mort. Des milliers de sarcophages et de reliefs romains reprennent ce même geste : une poignée de main devenue promesse éternelle.","en":"Look at their right hands, joined at the centre of the group. That gesture has a Latin name, dextrarum iunctio, and it says everything: it's the Roman symbol of marital fidelity and harmony, as instantly recognizable to a Roman as a wedding ring is to us. This double portrait, likely funerary, cares less about individual likeness than about the ideal of a couple united even in death. Thousands of Roman sarcophagi and reliefs repeat the same gesture — a handshake turned into an eternal promise.","es":"Mire sus manos derechas, unidas en el centro del grupo. Ese gesto tiene nombre en latín, dextrarum iunctio, y lo resume todo: es el símbolo romano de la fidelidad conyugal y la armonía de la pareja, tan reconocible para un romano como lo es hoy un anillo de bodas. Este retrato doble, probablemente funerario, no busca tanto el parecido individual como el ideal de una pareja unida incluso más allá de la muerte. Miles de sarcófagos y relieves romanos repiten el mismo gesto: un apretón de manos convertido en promesa eterna."}},{"id":"strigilated-sarcophagus-lions","meta":{"fr":{"t":"Sarcophage à strigiles aux lions","m":"V. 260-270 · Marbre grec · Palazzo Savelli"},"en":{"t":"Strigilated Sarcophagus with Lions","m":"About 260–270 · Greek marble · Palazzo Savelli"},"es":{"t":"Sarcófago estriado con leones","m":"H. 260-270 · Mármol griego · Palazzo Savelli"}},"txt":{"fr":"Les cannelures ondulées qui couvrent ce sarcophage imitent la strigile, un racloir que les athlètes romains utilisaient pour ôter l'huile et la poussière de leur peau après l'exercice — un motif décoratif à la mode, rapide à tailler, qui laissait toute la place aux scènes figurées sur les côtés. Ici, des lions dominent un dompteur : une image qui pourrait renvoyer aux jeux du cirque et suggérer que le défunt, ou sa famille, avait un lien avec ces spectacles. Assemblé à partir de plusieurs fragments et abondamment restauré au fil des siècles, ce monument porte les traces visibles de sa propre survie.","en":"The rippling grooves covering this sarcophagus imitate the strigil, a scraper Roman athletes used to remove oil and dust from their skin after exercise — a fashionable, quick-to-carve decorative motif that left the figured scenes on the sides to do the storytelling. Here, lions overpower a tamer: an image that may point to the arena games and suggest the deceased, or their family, had some connection to them. Assembled from several fragments and heavily restored over the centuries, this monument still carries the visible marks of its own survival.","es":"Las ondulaciones que cubren este sarcófago imitan la estrígile, un raspador que los atletas romanos usaban para quitarse el aceite y el polvo de la piel después de hacer ejercicio: un motivo decorativo de moda, rápido de tallar, que dejaba todo el protagonismo a las escenas figuradas de los laterales. Aquí, unos leones dominan a un domador: una imagen que podría remitir a los juegos del circo y sugerir que el difunto, o su familia, tenía algún vínculo con ellos. Ensamblado a partir de varios fragmentos y ampliamente restaurado a lo largo de los siglos, este monumento conserva las huellas visibles de su propia supervivencia."}},{"id":"attic-votive-relief","meta":{"fr":{"t":"Relief votif attique","m":"Fin du 5e s. av. n. è. · Marbre pentélique"},"en":{"t":"Attic Votive Relief","m":"Late 5th c. BCE · Pentelic marble"},"es":{"t":"Relieve votivo ático","m":"Fines del s. V a.e.c. · Mármol pentélico"}},"txt":{"fr":"Presque toutes les sculptures grecques présentées ici sont en réalité des copies romaines. Celle-ci ne l'est pas : c'est un original grec, sculpté dans l'Athènes classique, peut-être destiné à l'Acropole elle-même. Quand ce relief est arrivé à Rome, probablement au 2e siècle, il était déjà vieux de quatre à cinq cents ans — l'équivalent, pour un collectionneur romain, d'un objet Renaissance pour nous aujourd'hui. Posséder un original grec authentique, et non une copie, affichait une richesse et un raffinement que peu de familles romaines pouvaient se permettre.","en":"Almost every Greek-looking sculpture in this show is actually a Roman copy. This one isn't: it's a genuine Greek original, carved in Classical Athens, perhaps intended for the Acropolis itself. By the time it reached Rome, likely in the 2nd century, it was already four or five hundred years old — for a Roman collector, roughly what a Renaissance object is to us today. Owning an authentic Greek original, not a copy, signalled a wealth and refinement few Roman families could afford.","es":"Casi todas las esculturas de aspecto griego que ha visto hasta ahora son en realidad copias romanas. Esta no lo es: es un original griego auténtico, esculpido en la Atenas clásica, quizás destinado a la propia Acrópolis. Cuando este relieve llegó a Roma, probablemente en el siglo II, ya tenía cuatrocientos o quinientos años de antigüedad —lo que, para un coleccionista romano, equivaldría hoy a un objeto renacentista para nosotros. Poseer un original griego auténtico, y no una copia, era una muestra de riqueza y refinamiento que pocas familias romanas podían permitirse."}},{"id":"trajans-women","meta":{"fr":{"t":"Les femmes de Trajan","m":"Section thématique · Portraits impériaux romains"},"en":{"t":"Trajan's Women","m":"Thematic section · Roman imperial portraiture"},"es":{"t":"Las mujeres de Trajano","m":"Sección temática · Retratos imperiales romanos"}},"txt":{"fr":"Autour de vous, plusieurs visages de femmes liées à l'empereur Trajan : Marciana sa sœur, Plotina son épouse, Matidia sa nièce. Aucune d'elles n'a régné, mais leurs portraits officiels circulaient dans tout l'Empire, sur des sculptures comme sur des monnaies, pour asseoir la légitimité et la continuité de la famille impériale. Une coiffure particulière, une posture, un titre gravé suffisaient à transformer une parente en incarnation publique des vertus féminines romaines : piété, dignité, fidélité. Prenez le temps de comparer ces visages : de subtiles variations de style trahissent des ateliers, des générations, parfois des messages politiques différents.","en":"Around you are several women connected to the emperor Trajan: his sister Marciana, his wife Plotina, his niece Matidia. None of them ruled, yet their official portraits circulated across the Empire, on sculpture and on coins alike, to project the legitimacy and continuity of the imperial family. A particular hairstyle, a posture, an inscribed title was enough to turn a relative into a public embodiment of Roman feminine virtue: piety, dignity, fidelity. Take a moment to compare these faces — subtle stylistic differences betray different workshops, generations, and sometimes different political messages.","es":"A su alrededor hay varios rostros de mujeres vinculadas al emperador Trajano: su hermana Marciana, su esposa Plotina, su sobrina Matidia. Ninguna gobernó, pero sus retratos oficiales circulaban por todo el Imperio, tanto en esculturas como en monedas, para reforzar la legitimidad y la continuidad de la familia imperial. Un peinado particular, una postura, un título grabado bastaban para convertir a una pariente en encarnación pública de las virtudes femeninas romanas: piedad, dignidad, fidelidad. Tómese un momento para comparar estos rostros: sutiles variaciones de estilo delatan talleres, generaciones y, a veces, mensajes políticos distintos."}},{"id":"ensuring-continuity","meta":{"fr":{"t":"Assurer la continuité","m":"Section thématique · Portraits impériaux romains"},"en":{"t":"Ensuring Continuity","m":"Thematic section · Roman imperial portraiture"},"es":{"t":"Asegurar la continuidad","m":"Sección temática · Retratos imperiales romanos"}},"txt":{"fr":"Marc Aurèle et Lucius Verus ont gouverné Rome ensemble, une expérience rare de pouvoir partagé. Pour la consolider, des alliances matrimoniales ont scellé les deux branches de la famille impériale, portées ici par deux femmes : Faustine la Jeune et Lucilla. Leurs portraits jouent un jeu d'équilibriste : assez proches l'un de l'autre pour affirmer un air de famille rassurant, assez distincts pour que chacune incarne son propre idéal de féminité impériale. Rien n'était laissé au hasard dans ces visages : chaque détail servait la légitimité du pouvoir.","en":"Marcus Aurelius and Lucius Verus ruled Rome together, a rare experiment in shared power. To cement it, marriage alliances bound the two branches of the imperial family, embodied here by two women: Faustina the Younger and Lucilla. Their portraits perform a careful balancing act — close enough to project a reassuring family resemblance, distinct enough that each embodies her own ideal of imperial femininity. Nothing in these faces was left to chance; every detail served the legitimacy of power.","es":"Marco Aurelio y Lucio Vero gobernaron Roma juntos, un experimento poco común de poder compartido. Para consolidarlo, alianzas matrimoniales unieron las dos ramas de la familia imperial, encarnadas aquí por dos mujeres: Faustina la Menor y Lucila. Sus retratos hacen un ejercicio de equilibrio: lo bastante parecidos entre sí como para proyectar un aire de familia tranquilizador, lo bastante distintos como para que cada una encarne su propio ideal de feminidad imperial. Nada en estos rostros quedaba al azar: cada detalle servía a la legitimidad del poder."}},{"id":"girl-with-bird","meta":{"fr":{"t":"Fillette tenant un oiseau","m":"1re moitié du 2e s. · Via Latina, Rome"},"en":{"t":"Girl Holding a Bird","m":"First half of 2nd c. · Via Latina, Rome"},"es":{"t":"Niña con un pájaro","m":"1.ª mitad del s. II · Vía Latina, Roma"}},"txt":{"fr":"Pendant longtemps, on a cru voir ici un jeune garçon nourrissant un oiseau. Un examen plus attentif a révélé un trou d'oreille percé pour une boucle : c'est une fillette. Le motif de l'enfant et de l'oiseau évoque un thème grec ancien associé à la pureté et à l'affection, que le poète romain Catulle a rendu célèbre en comparant les caresses d'un amant à celles qu'on offre à un moineau apprivoisé. Une simple erreur d'identification, corrigée des siècles plus tard, change complètement la lecture de cette scène tendre.","en":"For a long time, this was read as a young boy feeding a bird. Closer examination revealed a pierced earring hole: it's a girl. The motif of a child with a bird draws on an old Greek theme linked to purity and affection, one the Roman poet Catullus made famous by comparing a lover's caresses to those given to a tame sparrow. A simple misidentification, corrected centuries later, completely changes how we read this tender little scene.","es":"Durante mucho tiempo se interpretó como un niño alimentando a un pájaro. Un examen más atento reveló un agujero de pendiente en la oreja: es una niña. El motivo del niño con un ave remite a un tema griego antiguo asociado con la pureza y el afecto, que el poeta romano Catulo hizo célebre al comparar las caricias de un amante con las que se le dan a un gorrión domesticado. Un simple error de identificación, corregido siglos después, cambia por completo la lectura de esta escena tan tierna."}},{"id":"hercules-sarcophagus-asiatic","meta":{"fr":{"t":"Sarcophage aux travaux d'Hercule, avec couvercle","m":"2e moitié du 2e s. · Marbre d'Asie · Palazzo Savelli"},"en":{"t":"Sarcophagus with the Labours of Hercules and Lid","m":"2nd half of 2nd c. · Asiatic marble · Palazzo Savelli"},"es":{"t":"Sarcófago con los trabajos de Hércules, con tapa","m":"2.ª mitad del s. II · Mármol asiático · Palazzo Savelli"}},"txt":{"fr":"Un second sarcophage d'Hercule dans ce même parcours : preuve que ce héros triomphant était un choix funéraire particulièrement recherché par les familles romaines aisées. Mais regardez le couvercle : un couple y est allongé comme à un banquet, dans la pose exacte qu'ils auraient adoptée pour un dîner de leur vivant. En dessous, les travaux d'Hercule ; au-dessus, l'éternité imaginée comme un repas sans fin entre égaux. Ce monument massif, importé d'Asie Mineure à prix d'or, n'était pas seulement un tombeau : c'était la dernière déclaration publique du statut social d'une famille.","en":"A second Hercules sarcophagus on this same tour — proof that the triumphant hero was a particularly sought-after choice for wealthy Roman families laying loved ones to rest. But look at the lid: a couple reclines there as if at a banquet, in the exact pose they'd have struck at a dinner party in life. Below, Hercules's labours; above, eternity imagined as an endless meal among equals. This massive monument, imported from Asia Minor at enormous cost, wasn't just a tomb — it was a family's final public statement of status.","es":"Un segundo sarcófago de Hércules en este mismo recorrido: prueba de que el héroe triunfante era una elección funeraria especialmente buscada por las familias romanas acomodadas. Pero mire la tapa: una pareja está recostada como en un banquete, en la misma pose que habrían adoptado en una cena en vida. Abajo, los trabajos de Hércules; arriba, la eternidad imaginada como una comida sin fin entre iguales. Este monumento macizo, importado desde Asia Menor a precio de oro, no era solo una tumba: era la última declaración pública del estatus social de una familia."}},{"id":"apollo-citharoedus","meta":{"fr":{"t":"Apollon citharède","m":"2e s. · Peut-être trouvé à Ostie"},"en":{"t":"Apollo Citharoedus","m":"2nd c. · Possibly found in Ostia"},"es":{"t":"Apolo citaredo","m":"s. II · Posiblemente hallado en Ostia"}},"txt":{"fr":"Apollon, dieu de la musique, de la poésie et de la prophétie, est ici saisi comme en pleine performance, une lyre à la main : le type dit citharède, associé aux théâtres antiques où sa statue pouvait présider aux concours de chant. Le modèle s'inspire du style Sévère grec, austère et frontal, remis au goût du jour des siècles plus tard. Une anecdote de restauration mérite le détour : au 19e siècle, un restaurateur a délibérément rapproché ce marbre de l'Apollon du Belvédère, alors la statue la plus admirée d'Europe, conservée aux Musées du Vatican — preuve que même l'Antiquité s'est parfois copiée elle-même.","en":"Apollo, god of music, poetry, and prophecy, is caught here mid-performance, lyre in hand: the so-called citharoedus type, linked to ancient theatres where his statue might preside over singing contests. The model draws on the austere, frontal Greek Severe Style, revived centuries later. One restoration detail is worth lingering on: in the 19th century, a restorer deliberately reworked this marble to echo the Apollo Belvedere, then the most admired statue in Europe, held in the Vatican Museums — proof that even antiquity sometimes copied itself.","es":"Apolo, dios de la música, la poesía y la profecía, aparece aquí a mitad de una interpretación, lira en mano: el llamado tipo citaredo, vinculado a los teatros antiguos donde su estatua podía presidir concursos de canto. El modelo se inspira en el austero y frontal estilo Severo griego, retomado siglos después. Vale la pena detenerse en un dato de restauración: en el siglo XIX, un restaurador acercó deliberadamente este mármol al Apolo de Belvedere, entonces la estatua más admirada de Europa, conservada en los Museos Vaticanos — prueba de que hasta la Antigüedad a veces se copiaba a sí misma."}},{"id":"aphrodite-eros-ketos","meta":{"fr":{"t":"Aphrodite avec Éros et un monstre marin","m":"1re moitié du 2e s. · Collection Giustiniani"},"en":{"t":"Aphrodite with Eros and a Sea Monster","m":"First half of 2nd c. · Giustiniani Collection"},"es":{"t":"Afrodita con Eros y un monstruo marino","m":"1.ª mitad del s. II · Colección Giustiniani"}},"txt":{"fr":"Aphrodite se tient avec grâce, un Éros facétieux à ses côtés, tandis qu'un ketos — un monstre marin serpentin — s'enroule à ses pieds. Ce type de groupe théâtral, inspiré des inventions grecques de l'époque hellénistique, était particulièrement prisé pour orner les thermes et les espaces publics romains, où l'eau, la mythologie marine et la nudité divine formaient un decorum parfaitement assumé. Rien ici n'est austère : c'est un art pensé pour le plaisir des yeux autant que pour la piété.","en":"Aphrodite stands with grace, a mischievous Eros beside her, while a ketos — a serpentine sea monster — coils at her feet. This kind of theatrical group, inspired by Hellenistic Greek inventions, was especially popular for decorating Roman baths and public spaces, where water, marine mythology, and divine nudity formed a perfectly acceptable decorum. Nothing austere here — this is art made for the pleasure of the eye as much as for piety.","es":"Afrodita se yergue con gracia, con un Eros travieso a su lado, mientras un ketos —un monstruo marino serpentino— se enrosca a sus pies. Este tipo de grupo teatral, inspirado en invenciones griegas de época helenística, era especialmente apreciado para decorar termas y espacios públicos romanos, donde el agua, la mitología marina y la desnudez divina formaban un decoro perfectamente aceptado. Nada austero aquí: es un arte pensado tanto para el placer de la vista como para la piedad."}},{"id":"bacchus-on-ram","meta":{"fr":{"t":"Le jeune Bacchus chevauchant un bélier","m":"1er-2e s. · Peut-être trouvé sur la Via Appia"},"en":{"t":"Infant Bacchus Riding a Ram","m":"1st–2nd c. · Possibly found on the Via Appia"},"es":{"t":"El joven Baco cabalgando un carnero","m":"s. I-II · Posiblemente hallado en la Vía Apia"}},"txt":{"fr":"Un enfant potelé chevauche joyeusement un bélier : Bacchus, dieu du vin et de l'extase, montré ici dans son enfance plutôt que dans ses excès légendaires. Ce type de scène pastorale et enfantine, sans grand enjeu narratif, ornait volontiers jardins et villas romaines — un art domestique, presque décoratif, loin de la solennité des portraits impériaux. On y sent le plaisir simple de représenter l'innocence et le mouvement, sans autre message que la joie.","en":"A chubby child rides joyfully on a ram's back: Bacchus, god of wine and ecstasy, shown here in childhood rather than in his legendary excesses. This kind of light, pastoral, child-centred scene, with little narrative weight, was a favourite for decorating Roman gardens and villas — domestic, almost purely ornamental art, far from the solemnity of imperial portraits. There's a simple pleasure in it: capturing innocence and motion, with no message beyond delight.","es":"Un niño rechoncho cabalga alegremente sobre un carnero: Baco, dios del vino y el éxtasis, mostrado aquí en su infancia y no en sus legendarios excesos. Este tipo de escena pastoral e infantil, sin grandes pretensiones narrativas, solía decorar jardines y villas romanas: un arte doméstico, casi puramente ornamental, lejos de la solemnidad de los retratos imperiales. Se percibe el placer simple de representar la inocencia y el movimiento, sin más mensaje que la alegría."}},{"id":"emperor-throne-augustus","meta":{"fr":{"t":"Empereur en majesté, portrait d'Auguste","m":"1er s. · Peut-être trouvé à Boville"},"en":{"t":"Enthroned Emperor, Portrait of Augustus","m":"1st c. · Possibly found in Boville","es_unused":""},"es":{"t":"Emperador en majestad, retrato de Augusto","m":"s. I · Posiblemente hallado en Boville"}},"txt":{"fr":"Assis en majesté dans une pose qui rappelle les grandes images grecques de Zeus ou de Jupiter, cet empereur emprunte le langage visuel des dieux pour asseoir son autorité. La tête est une addition moderne qui a transformé la statue en portrait d'Auguste, premier empereur de Rome : une manière de rappeler que le pouvoir impérial se construisait aussi par association visuelle avec le divin. Le corps antique, en marbre pentélique, et les ajouts plus récents racontent ensemble une double histoire, celle de la Rome antique et celle des collectionneurs qui, des siècles plus tard, ont choisi de la compléter.","en":"Seated in majesty, in a pose echoing the great Greek images of Zeus or Jupiter, this emperor borrows the visual language of the gods to project his authority. The head is a later addition that turned the statue into a portrait of Augustus, Rome's first emperor — a reminder that imperial power was built partly through visual association with the divine. The ancient body, carved in Pentelic marble, and the more recent additions together tell a double story: one of ancient Rome, and one of the collectors who, centuries later, chose how to complete it.","es":"Sentado en majestad, en una pose que recuerda las grandes imágenes griegas de Zeus o Júpiter, este emperador toma prestado el lenguaje visual de los dioses para afirmar su autoridad. La cabeza es un añadido posterior que transformó la estatua en un retrato de Augusto, primer emperador de Roma: un recordatorio de que el poder imperial también se construía por asociación visual con lo divino. El cuerpo antiguo, en mármol pentélico, y los añadidos más recientes cuentan juntos una doble historia: la de la Roma antigua y la de los coleccionistas que, siglos después, decidieron cómo completarla."}},{"id":"amelung-athlete","meta":{"fr":{"t":"Jeune athlète, dit l'athlète Amelung","m":"Fin 1er-début 2e s. · Fouilles Torlonia de 1864 à Portus"},"en":{"t":"Youth, Known as the Amelung Athlete","m":"Late 1st–early 2nd c. · 1864 Torlonia excavation at Portus"},"es":{"t":"Joven, conocido como el atleta Amelung","m":"Fines s. I-inicios s. II · Excavación Torlonia de 1864 en Portus"}},"txt":{"fr":"Ce jeune homme semble en train de nouer une lanière de cuir autour de sa tête — un geste qui trahit un pratiquant de pancrace ou de boxe, se protégeant le crâne avant l'entraînement. Le pancrace combinait coups de poing, prises de lutte et coups de pied, avec presque aucune limite : seuls les yeux et les morsures étaient interdits. Ce type de statue d'athlète, souvent copié d'un modèle grec en bronze aujourd'hui perdu, ornait les gymnases romains, où l'exercice physique restait indissociable d'un idéal esthétique et moral hérité de la Grèce.","en":"This young man appears to be tying a leather strap around his head — a gesture that marks him as a pankration fighter or boxer, protecting his skull before training. Pankration combined punches, wrestling holds, and kicks with almost no restrictions: only eye-gouging and biting were banned. This type of athlete statue, often copied from a lost Greek bronze original, decorated Roman gymnasiums, where physical training remained inseparable from an aesthetic and moral ideal inherited from Greece.","es":"Este joven parece estar atándose una tira de cuero alrededor de la cabeza, un gesto propio de un practicante de pancracio o boxeo, protegiéndose el cráneo antes del entrenamiento. El pancracio combinaba golpes, llaves de lucha y patadas, con casi ninguna restricción: solo estaban prohibidos los mordiscos y meter los dedos en los ojos. Este tipo de estatua de atleta, a menudo copiada de un original griego en bronce hoy perdido, decoraba los gimnasios romanos, donde el ejercicio físico seguía siendo inseparable de un ideal estético y moral heredado de Grecia."}},{"id":"boy-with-dogs","meta":{"fr":{"t":"Jeune garçon et chiens","m":"2e s. · Cirque de Maxence, Via Appia"},"en":{"t":"Boy with Dogs","m":"2nd c. · Circus of Maxentius, Via Appia"},"es":{"t":"Niño con perros","m":"s. II · Circo de Majencio, Vía Apia"}},"txt":{"fr":"Découverte en 1828, cette statue d'un garçon nu n'a longtemps conservé que la tête, le torse et le haut des cuisses — les chiens à ses pieds semblaient une invention plus tardive. Des recherches récentes ont changé la donne : elles ont confirmé que les parties anciennes conservées correspondent exactement à un dessin réalisé au 19e siècle par l'archéologue Antonio Nibby, peu après la découverte. Ce croquis, retrouvé dans les archives, a permis d'authentifier la sculpture d'origine avec une précision inattendue — l'archéologie du 21e siècle validant un carnet vieux de deux cents ans.","en":"Discovered in 1828, this statue of a naked boy long survived only as a head, torso, and upper thighs — the dogs at his feet looked like a later addition. Recent research changed that: it confirmed that the surviving ancient portions match, detail for detail, a sketch made in the 19th century by the archaeologist Antonio Nibby, shortly after the discovery. That drawing, rediscovered in the archives, allowed scholars to authenticate the original sculpture with unexpected precision — 21st-century archaeology confirming a two-hundred-year-old notebook.","es":"Descubierta en 1828, esta estatua de un niño desnudo conservó durante mucho tiempo solo la cabeza, el torso y la parte superior de los muslos; los perros a sus pies parecían un añadido posterior. Investigaciones recientes cambiaron esa lectura: confirmaron que las partes antiguas conservadas coinciden, con precisión, con un dibujo realizado en el siglo XIX por el arqueólogo Antonio Nibby, poco después del hallazgo. Ese boceto, recuperado en los archivos, permitió autenticar la escultura original con una exactitud inesperada: la arqueología del siglo XXI confirmando un cuaderno de doscientos años."}},{"id":"maiden-of-vulci","meta":{"fr":{"t":"La jeune fille de Vulci","m":"Milieu du 1er s. av. n. è. · Peut-être trouvée à Vulci"},"en":{"t":"The Maiden of Vulci","m":"Mid-1st c. BCE · Possibly found in Vulci"},"es":{"t":"La joven de Vulci","m":"Mediados del s. I a.e.c. · Posiblemente hallada en Vulci"}},"txt":{"fr":"C'est, dit-on, l'œuvre la plus célèbre de toute la collection Torlonia : à peine trente-quatre centimètres de haut, et pourtant un visage qu'on n'oublie pas, le regard légèrement levé vers la droite. Une famille aisée et endeuillée a commandé ce portrait pour immortaliser une jeune femme, avec des détails autrefois saisissants de réalisme : une parure de cheveux ornée de bijoux, de vraies boucles d'oreilles rapportées, un drapé si fin qu'il semblait presque transparent. Qui était-elle ? On l'ignore. Mais ce visage anonyme est devenu, plus de deux mille ans plus tard, l'emblème visuel de toute l'exposition.","en":"This is said to be the single most famous work in the entire Torlonia Collection: barely thirteen inches tall, yet a face no one forgets, her gaze tilted slightly up and to the right. A wealthy, grieving family commissioned this portrait to immortalize a young woman, once finished with startlingly lifelike details — a jeweled hair ornament, real inset earrings, drapery carved so fine it looked almost transparent. Who was she? We don't know. But this anonymous face has become, over two thousand years later, the visual emblem of the entire exhibition.","es":"Se dice que es la obra más célebre de toda la colección Torlonia: apenas treinta y cuatro centímetros de alto, y sin embargo un rostro que no se olvida, con la mirada ligeramente alzada hacia la derecha. Una familia acomodada y de luto encargó este retrato para inmortalizar a una joven, con detalles antaño sorprendentemente realistas: un adorno de pelo con joyas, pendientes reales incrustados, un drapeado tan fino que parecía casi transparente. ¿Quién era? No lo sabemos. Pero este rostro anónimo se ha convertido, más de dos mil años después, en el emblema visual de toda la exposición."}},{"id":"euthydemus-bactria","meta":{"fr":{"t":"Portrait d'homme, dit Euthydème de Bactriane","m":"Fin 3e-début 2e s. av. n. è. · Collection Giustiniani"},"en":{"t":"Portrait of a Man, Known as Euthydemus of Bactria","m":"Late 3rd–early 2nd c. BCE · Giustiniani Collection"},"es":{"t":"Retrato de un hombre, llamado Eutidemo de Bactriana","m":"Fines s. III-inicios s. II a.e.c. · Colección Giustiniani"}},"txt":{"fr":"Un visage buriné, un regard sévère : ce portrait appartient à la tradition hellénistique du réalisme, celle-là même qui influencera plus tard les portraitistes romains. Le nom traditionnellement associé à cette tête, Euthydème, désignait un roi grec qui régnait sur la lointaine Bactriane, aux confins de l'Asie centrale, à des milliers de kilomètres de Rome — preuve de l'étendue du monde connu des collectionneurs antiques. Le large chapeau qui semblait autrefois l'identifier a en grande partie été ajouté des siècles après la sculpture originale, un rappel que les attributs d'un portrait peuvent parfois en dire plus sur ses restaurateurs que sur son sujet.","en":"A weathered face, a stern gaze: this portrait belongs to the Hellenistic tradition of realism that would later shape Roman portraiture. The name traditionally attached to this head, Euthydemus, refers to a Greek king who ruled distant Bactria, on the edges of Central Asia, thousands of kilometres from Rome — a reminder of just how wide the ancient collectors' known world really was. The broad hat that once seemed to identify him was largely added centuries after the original sculpture, a reminder that a portrait's attributes can sometimes say more about its restorers than about its subject.","es":"Un rostro curtido, una mirada severa: este retrato pertenece a la tradición helenística del realismo, la misma que más tarde influiría en los retratistas romanos. El nombre tradicionalmente asociado a esta cabeza, Eutidemo, designaba a un rey griego que gobernaba la lejana Bactriana, en los confines de Asia Central, a miles de kilómetros de Roma: prueba de lo extenso que era el mundo conocido para los coleccionistas antiguos. El amplio sombrero que antes parecía identificarlo fue en gran parte añadido siglos después de la escultura original, un recordatorio de que los atributos de un retrato a veces dicen más de sus restauradores que de su protagonista."}},{"id":"cupid-psyche","meta":{"fr":{"t":"Cupidon et Psyché","m":"2e moitié du 2e s. · Peut-être trouvé près de Castra Praetoria"},"en":{"t":"Cupid and Psyche","m":"2nd half of 2nd c. · Possibly found near Castra Praetoria"},"es":{"t":"Cupido y Psique","m":"2.ª mitad del s. II · Posiblemente hallado cerca de Castra Praetoria"}},"txt":{"fr":"Deux adolescents s'enlacent tendrement : Cupidon, dieu de l'amour, et Psyché, personnification de l'âme humaine. Leur légende, racontée par l'écrivain Apulée, est un conte d'amour interdit, d'épreuves imposées par la jalousie de Vénus, et finalement récompensé par l'immortalité — une histoire si aimée qu'elle a inspiré d'innombrables copies jusqu'à l'époque moderne. Regardez les teintes de marbre : le corps ancien, en marbre grec, contraste avec les parties restaurées en marbre blanc et en pavonazzetto veiné, signe visible que cette œuvre a traversé les siècles par étapes, chacune laissant sa trace.","en":"Two adolescents share a tender embrace: Cupid, god of love, and Psyche, the personification of the human soul. Their story, told by the writer Apuleius, is a tale of forbidden love, trials imposed by Venus's jealousy, and a reward of immortality at the end — so beloved a story it inspired countless copies well into the modern era. Look closely at the marble tones: the ancient Greek-marble body contrasts with sections restored in white marble and veined pavonazzetto, a visible sign that this work crossed the centuries in stages, each one leaving its mark.","es":"Dos adolescentes se abrazan con ternura: Cupido, dios del amor, y Psique, personificación del alma humana. Su leyenda, narrada por el escritor Apuleyo, es un relato de amor prohibido, de pruebas impuestas por los celos de Venus, y finalmente recompensado con la inmortalidad: una historia tan querida que inspiró innumerables copias hasta la época moderna. Fíjese en los tonos del mármol: el cuerpo antiguo, en mármol griego, contrasta con las partes restauradas en mármol blanco y pavonazzetto veteado, señal visible de que esta obra atravesó los siglos por etapas, cada una dejando su huella."}},{"id":"boy-as-harpocrates","meta":{"fr":{"t":"Jeune garçon, restauré en Harpocrate","m":"1er-2e s. · Collection Giustiniani"},"en":{"t":"Boy, Restored as Harpocrates","m":"1st–2nd c. · Giustiniani Collection"},"es":{"t":"Niño, restaurado como Harpócrates","m":"s. I-II · Colección Giustiniani"}},"txt":{"fr":"Harpocrate descend du dieu égyptien Horus enfant, mais les Romains ont réinterprété son geste — un doigt porté aux lèvres — comme un signe universel de silence et de secret. Cette statue raconte une double transformation : au départ, le torse ancien représentait simplement un jeune garçon ; au 17e siècle, un restaurateur l'a réinventé en Harpocrate en ajoutant une coiffe égyptisante et une tête de fillette totalement étrangère au corps d'origine. Le résultat assume pleinement son hybridité, typique du goût baroque pour les figures composites et exotiques.","en":"Harpocrates descends from the Egyptian child-god Horus, but the Romans reinterpreted his gesture — a finger raised to the lips — as a universal sign of silence and secrecy. This statue tells a double transformation: originally, the ancient torso simply depicted a young boy; in the 17th century, a restorer reinvented it as Harpocrates by adding an Egyptian-style headdress and the head of a young girl entirely unrelated to the original body. The result fully embraces its own hybridity, typical of the Baroque taste for composite, exotic figures.","es":"Harpócrates desciende del dios egipcio Horus niño, pero los romanos reinterpretaron su gesto —un dedo llevado a los labios— como una señal universal de silencio y secreto. Esta estatua cuenta una doble transformación: en origen, el torso antiguo representaba simplemente a un niño; en el siglo XVII, un restaurador lo reinventó como Harpócrates añadiendo un tocado de estilo egipcio y una cabeza de niña completamente ajena al cuerpo original. El resultado asume por completo su propia hibridez, típica del gusto barroco por las figuras compuestas y exóticas."}},{"id":"old-man-otricoli","meta":{"fr":{"t":"Le vieil homme d'Otricoli","m":"Milieu du 1er s. av. n. è. · Peut-être trouvé à Otricoli"},"en":{"t":"The Old Man of Otricoli","m":"Mid-1st c. BCE · Possibly found in Otricoli"},"es":{"t":"El viejo de Otricoli","m":"Mediados del s. I a.e.c. · Posiblemente hallado en Otricoli"}},"txt":{"fr":"Rides profondes, joues creusées, peau relâchée : rien n'est adouci ici. Ce portrait est l'un des exemples les plus célèbres du vérisme romain, ce style qui, à la fin de la République, choisissait délibérément de vieillir ses sujets plutôt que de les idéaliser. Chaque marque du temps devenait une preuve d'expérience, de sagesse, d'autorité méritée — l'exact inverse des futurs portraits impériaux qui figeront leurs sujets dans une jeunesse éternelle. Reproduit dans d'innombrables manuels d'histoire de l'art, ce visage est devenu, avec la jeune fille de Vulci, l'un des deux visages emblèmes de toute la collection Torlonia.","en":"Deep wrinkles, hollow cheeks, sagging skin: nothing here is softened. This portrait is one of the most famous examples of Roman verism, a style that, in the late Republic, deliberately aged its subjects rather than idealizing them. Every mark of time became proof of experience, wisdom, hard-earned authority — the exact opposite of the later imperial portraits that would freeze their subjects in eternal youth. Reproduced in countless art history textbooks, this face has become, alongside the Maiden of Vulci, one of the two emblematic faces of the entire Torlonia Collection.","es":"Arrugas profundas, mejillas hundidas, piel caída: aquí nada se suaviza. Este retrato es uno de los ejemplos más célebres del verismo romano, un estilo que, a fines de la República, elegía deliberadamente envejecer a sus modelos en vez de idealizarlos. Cada marca del tiempo se convertía en prueba de experiencia, sabiduría y autoridad merecida: justo lo contrario de los futuros retratos imperiales, que congelarían a sus modelos en una juventud eterna. Reproducido en incontables manuales de historia del arte, este rostro se ha convertido, junto con la joven de Vulci, en uno de los dos rostros emblema de toda la colección Torlonia."}},{"id":"artemis-ephesia","meta":{"fr":{"t":"Artémis d'Éphèse","m":"2e s. · Collection Giustiniani"},"en":{"t":"Artemis Ephesia","m":"2nd c. · Giustiniani Collection"},"es":{"t":"Ártemis de Éfeso","m":"s. II · Colección Giustiniani"}},"txt":{"fr":"Impossible de confondre cette Artémis avec une autre déesse : son corps est entièrement recouvert de rangées d'animaux, de signes zodiacaux et de formes globulaires souvent interprétées comme des symboles de protection universelle. Ce type dérive d'une statue de culte extrêmement ancienne conservée dans le sanctuaire d'Artémis à Éphèse, en Asie Mineure, l'une des sept merveilles du monde antique. Contrairement au marbre blanc du corps, la tête, le cou et les mains sont taillés dans un marbre noir : un choix rare qui accentuait sans doute, dans la pénombre d'un temple, l'aura mystérieuse de la déesse.","en":"There's no mistaking this Artemis for any other goddess: her body is entirely covered in rows of animals, zodiac signs, and rounded forms often read as universal symbols of protection. The type derives from an extremely ancient cult statue housed in the sanctuary of Artemis at Ephesus, in Asia Minor — one of the Seven Wonders of the ancient world. Unlike the white marble of the body, the head, neck, and hands are carved from black marble: a rare choice that, in the dim light of a temple, would have deepened the goddess's mysterious aura.","es":"Es imposible confundir a esta Ártemis con otra diosa: su cuerpo está enteramente cubierto de hileras de animales, signos zodiacales y formas globulares a menudo interpretadas como símbolos de protección universal. Este tipo deriva de una estatua de culto extremadamente antigua conservada en el santuario de Ártemis en Éfeso, en Asia Menor, una de las siete maravillas del mundo antiguo. A diferencia del mármol blanco del cuerpo, la cabeza, el cuello y las manos están tallados en mármol negro: una elección poco frecuente que, en la penumbra de un templo, sin duda acentuaba el aura misteriosa de la diosa."}},{"id":"odysseus-ram","meta":{"fr":{"t":"Ulysse sous le bélier","m":"Fin du 1er s. · Villa Albani"},"en":{"t":"Odysseus Beneath the Ram","m":"Late 1st c. · Villa Albani"},"es":{"t":"Odiseo bajo el carnero","m":"Fines del s. I · Villa Albani"}},"txt":{"fr":"Un épisode précis de l'Odyssée d'Homère : prisonnier dans la grotte du cyclope Polyphème, Ulysse échappe au monstre aveuglé en s'attachant sous le ventre d'un bélier, confondu avec la laine de l'animal. Ce groupe capture l'instant de la ruse plutôt que celui de l'action héroïque — l'intelligence plutôt que la force brute, une valeur profondément grecque que les Romains ont adoptée avec enthousiasme dans leur propre panthéon de héros littéraires.","en":"A precise episode from Homer's Odyssey: trapped in the cave of the Cyclops Polyphemus, Odysseus escapes the blinded monster by lashing himself beneath the belly of a ram, mistaken for the animal's fleece. This group captures the moment of cunning rather than heroic action — intelligence over brute strength, a deeply Greek value that the Romans enthusiastically adopted into their own pantheon of literary heroes.","es":"Un episodio muy preciso de la Odisea de Homero: atrapado en la cueva del cíclope Polifemo, Odiseo escapa del monstruo cegado atándose bajo el vientre de un carnero, confundido con la lana del animal. Este grupo capta el instante de la astucia y no el de la acción heroica: la inteligencia por encima de la fuerza bruta, un valor profundamente griego que los romanos adoptaron con entusiasmo en su propio panteón de héroes literarios."}},{"id":"isis-as-ceres","meta":{"fr":{"t":"Isis, restaurée en Cérès","m":"2e-début du 3e s. · Collection Giustiniani"},"en":{"t":"Isis, Restored as Ceres","m":"2nd–early 3rd c. · Giustiniani Collection"},"es":{"t":"Isis, restaurada como Ceres","m":"s. II-inicios s. III · Colección Giustiniani"}},"txt":{"fr":"Cette statue a changé d'identité divine au fil du temps. Sculptée à l'origine pour représenter Isis, déesse égyptienne associée à la protection et à la maternité, elle a été transformée par des restaurateurs modernes, qui lui ont ajouté une main tenant des épis de blé : la voici devenue Cérès, déesse romaine de l'agriculture. Ce genre de glissement était courant, car de nombreuses divinités égyptiennes et romaines partageaient des attributs suffisamment proches pour permettre ce genre de réinvention — un rappel que l'identité d'une statue n'est jamais totalement figée.","en":"This statue has changed divine identity over time. Originally carved to represent Isis, the Egyptian goddess linked to protection and motherhood, it was transformed by modern restorers, who added a hand holding wheat sheaves: here she is, now Ceres, the Roman goddess of agriculture. This kind of shift was common, since many Egyptian and Roman deities shared attributes close enough to make this sort of reinvention possible — a reminder that a statue's identity is never entirely fixed.","es":"Esta estatua ha cambiado de identidad divina con el tiempo. Esculpida en origen para representar a Isis, diosa egipcia asociada con la protección y la maternidad, fue transformada por restauradores modernos, que le añadieron una mano sosteniendo espigas de trigo: aquí la tiene, convertida ahora en Ceres, diosa romana de la agricultura. Este tipo de cambio era habitual, ya que muchas divinidades egipcias y romanas compartían atributos lo bastante parecidos como para permitir esta clase de reinvención: un recordatorio de que la identidad de una estatua nunca queda del todo fija."}},{"id":"portus-relief","meta":{"fr":{"t":"Le relief de Portus","m":"Fin du 2e-début du 3e s. · Fouilles Torlonia de 1864 à Portus"},"en":{"t":"The Portus Relief","m":"Late 2nd–early 3rd c. · 1864 Torlonia excavation at Portus"},"es":{"t":"El relieve de Portus","m":"Fines s. II-inicios s. III · Excavación Torlonia de 1864 en Portus"}},"txt":{"fr":"C'est l'un des fragments antiques les plus étudiés au monde. Ce relief représente Portus, le port impérial de Rome, actif pendant plus de quatre siècles : bâtiments réels, activité commerciale animée, et de grands yeux apotropaïques censés éloigner le mauvais sort, comme on en peignait encore sur les bateaux de pêche méditerranéens il y a peu. Regardez la surface de très près : des traces de peinture originale — rouge, jaune, vert, bleu — ont survécu, un témoignage rarissime de la Rome antique en couleur, quand la plupart des marbres qui nous entourent aujourd'hui nous parviennent d'une blancheur trompeuse.","en":"This is one of the most studied ancient fragments in the world. The relief depicts Portus, imperial Rome's harbour, active for more than four centuries: real buildings, bustling commercial activity, and large apotropaic eyes meant to ward off bad luck, much like the eyes still painted on Mediterranean fishing boats not so long ago. Look closely at the surface: traces of original paint — red, yellow, green, blue — have survived, an exceedingly rare glimpse of ancient Rome in colour, when most of the marble around us today reaches us deceptively white.","es":"Este es uno de los fragmentos antiguos más estudiados del mundo. El relieve representa Portus, el puerto imperial de Roma, activo durante más de cuatro siglos: edificios reales, bulliciosa actividad comercial y grandes ojos apotropaicos destinados a ahuyentar la mala suerte, muy parecidos a los que aún se pintaban en barcas de pesca mediterráneas hasta hace poco. Mire de cerca la superficie: han sobrevivido trazas de pintura original —rojo, amarillo, verde, azul—, un testimonio rarísimo de la Roma antigua en color, cuando la mayoría de los mármoles que nos rodean hoy nos llegan con una blancura engañosa."}},{"id":"mithraic-relief","meta":{"fr":{"t":"Relief du sacrifice mithriaque","m":"2e s. · Colline du Quirinal, Rome"},"en":{"t":"Relief of the Mithraic Sacrifice","m":"2nd c. · Quirinal Hill, Rome"},"es":{"t":"Relieve del sacrificio mitraico","m":"s. II · Colina del Quirinal, Roma"}},"txt":{"fr":"Mithra, dieu venu de Perse, plante son poignard dans le flanc d'un taureau : l'image centrale d'un culte à mystères extrêmement populaire parmi les soldats romains, en particulier aux frontières de l'Empire. Devenir initié impliquait de gravir sept grades secrets — corbeau, jeune marié, soldat, lion, perse, messager du soleil, père — chacun associé à une planète et à des rituels que peu de sources antiques décrivent, car le silence faisait partie du serment. Les cérémonies se tenaient dans des sanctuaires souterrains volontairement aménagés comme des grottes, loin du regard du reste de la cité.","en":"Mithras, a god of Persian origin, plunges his dagger into a bull's side: the central image of an extremely popular mystery cult among Roman soldiers, especially along the Empire's frontiers. Becoming an initiate meant climbing through seven secret grades — Raven, Bridegroom, Soldier, Lion, Persian, Sun-Runner, Father — each tied to a planet and to rituals that few ancient sources describe, since silence was part of the oath. Ceremonies took place in underground sanctuaries deliberately built to resemble caves, hidden from the rest of the city.","es":"Mitra, dios de origen persa, clava su puñal en el costado de un toro: la imagen central de un culto de misterios extremadamente popular entre los soldados romanos, sobre todo en las fronteras del Imperio. Convertirse en iniciado implicaba ascender por siete grados secretos —cuervo, novio, soldado, león, persa, mensajero del sol, padre—, cada uno vinculado a un planeta y a rituales que pocas fuentes antiguas describen, ya que el silencio formaba parte del juramento. Las ceremonias se celebraban en santuarios subterráneos construidos deliberadamente para parecer cuevas, ocultos de la mirada del resto de la ciudad."}},{"id":"mercury-herm","meta":{"fr":{"t":"Mercure en forme de terme","m":"2e s. · Fouilles à Curi, l'antique Cures"},"en":{"t":"Mercury in the Form of a Herm","m":"2nd c. · Excavated at Curi, ancient Cures"},"es":{"t":"Mercurio en forma de herma","m":"s. II · Excavado en Curi, la antigua Cures"}},"txt":{"fr":"Une tête posée sur un pilier nu et rectangulaire : c'est un terme, une forme de sculpture héritée de la Grèce ancienne, où l'on plaçait ces bornes aux carrefours et aux limites des cités pour éloigner le danger. Mercure, dieu du commerce, des routes et des voyageurs, y trouvait un support particulièrement logique — qui de mieux qu'un dieu voyageur pour veiller sur ceux qui empruntaient ces mêmes chemins ? Ce terme précis fut retrouvé dans le domaine de Cures, en Sabine, la même région où fut découvert le bronze de Germanicus que vous avez peut-être déjà vu.","en":"A head resting on a plain rectangular pillar: this is a herm, a sculptural form inherited from ancient Greece, where such markers were set up at crossroads and city boundaries to ward off danger. Mercury, god of commerce, roads, and travellers, was a particularly logical fit for this form — who better than a travelling god to watch over those using the same roads? This particular herm was found on the estate of Cures, in the Sabine hills, the same region where the bronze Germanicus you may have already seen was discovered.","es":"Una cabeza apoyada sobre un pilar liso y rectangular: es una herma, una forma escultórica heredada de la antigua Grecia, donde este tipo de marcadores se colocaban en cruces de caminos y límites de ciudades para alejar el peligro. Mercurio, dios del comercio, los caminos y los viajeros, encajaba de forma especialmente lógica en este soporte: ¿quién mejor que un dios viajero para velar por quienes recorrían esos mismos caminos? Esta herma en concreto se halló en la finca de Cures, en la Sabina, la misma región donde se descubrió el bronce de Germánico que quizás ya vio."}},{"id":"isis-statue","meta":{"fr":{"t":"Statue d'Isis","m":"2e s. · Peut-être collection Giustiniani"},"en":{"t":"Statue of Isis","m":"2nd c. · Possibly Giustiniani Collection"},"es":{"t":"Estatua de Isis","m":"s. II · Posiblemente colección Giustiniani"}},"txt":{"fr":"Après la chute de Cléopâtre et l'annexion de l'Égypte par Rome en 30 avant notre ère, le culte d'Isis s'est répandu dans toute l'Italie avec une ferveur inattendue pour une divinité étrangère. Seul le torse de cette statue est antique : le nœud caractéristique du vêtement sur la poitrine identifie la déesse sans ambiguïté, tandis que ses attributs restaurés — le sistre, une sorte de hochet sacré, et la situle, un petit seau rituel — complètent une iconographie que même un Romain non initié aurait su reconnaître au premier coup d'œil.","en":"After Cleopatra's fall and Rome's annexation of Egypt in 30 BCE, the cult of Isis spread across Italy with a fervour unusual for a foreign deity. Only the torso of this statue is ancient: the distinctive knotted garment across her chest identifies the goddess unmistakably, while her restored attributes — the sistrum, a kind of sacred rattle, and the situla, a small ritual bucket — complete an iconography even an uninitiated Roman would have recognized at a glance.","es":"Tras la caída de Cleopatra y la anexión de Egipto por Roma en el año 30 a.e.c., el culto a Isis se extendió por toda Italia con un fervor inusual para una divinidad extranjera. Solo el torso de esta estatua es antiguo: el característico nudo de la prenda sobre el pecho identifica a la diosa sin ambigüedad, mientras que sus atributos restaurados —el sistro, una especie de sonajero sagrado, y la situla, un pequeño cubo ritual— completan una iconografía que hasta un romano no iniciado habría reconocido de un vistazo."}},{"id":"hestia-giustiniani","meta":{"fr":{"t":"Déesse dite Hestia Giustiniani","m":"1re moitié du 2e s. · Marbre de Paros · Collection Giustiniani"},"en":{"t":"Goddess Known as the Hestia Giustiniani","m":"First half of 2nd c. · Parian marble · Giustiniani Collection"},"es":{"t":"Diosa llamada Hestia Giustiniani","m":"1.ª mitad del s. II · Mármol de Paros · Colección Giustiniani"}},"txt":{"fr":"Voici, dit-on, la seule réplique romaine complète connue à ce jour d'un bronze grec original du cinquième siècle avant notre ère. Son drapé raide, sa pose frontale et solennelle imitent délibérément le style dit Sévère, en vogue en Grèce autour de 470 avant notre ère — c'est-à-dire que même pour les Romains d'Hadrien qui ont commandé cette copie, ce style paraissait déjà ancien et empreint d'une austérité noble. Reproduire un archaïsme volontaire, deux siècles et demi après sa création : une forme de nostalgie esthétique que même l'Antiquité pratiquait.","en":"This is said to be the only complete Roman replica known today of an original Greek bronze from the fifth century BCE. Her stiff drapery and solemn frontal pose deliberately imitate the so-called Severe Style, fashionable in Greece around 470 BCE — meaning that even to the Hadrianic Romans who commissioned this copy, the style already looked ancient, carrying a noble austerity. Deliberately reviving an archaism two and a half centuries after it was created: a form of aesthetic nostalgia that even antiquity itself indulged in.","es":"Esta es, según se dice, la única réplica romana completa conocida hasta hoy de un bronce griego original del siglo V a.e.c. Su drapeado rígido y su pose frontal y solemne imitan deliberadamente el llamado estilo Severo, en boga en Grecia hacia el año 470 a.e.c. — es decir, que incluso para los romanos de época adrianea que encargaron esta copia, el estilo ya resultaba antiguo, cargado de una austeridad noble. Revivir a propósito un arcaísmo dos siglos y medio después de su creación: una forma de nostalgia estética que hasta la Antigüedad practicaba."}},{"id":"head-of-mars","meta":{"fr":{"t":"Tête de Mars","m":"1re moitié du 2e s. · Collection Giustiniani"},"en":{"t":"Head of Mars","m":"First half of 2nd c. · Giustiniani Collection"},"es":{"t":"Cabeza de Marte","m":"1.ª mitad del s. II · Colección Giustiniani"}},"txt":{"fr":"Mars, dieu de la guerre, occupait une place à part dans l'imaginaire romain : contrairement à son équivalent grec Arès, souvent traité avec ambivalence, Mars était vénéré comme le père mythique de Rome elle-même, à travers Romulus et Rémus. Cette tête appartient à un type sculptural précis, documenté sur plusieurs exemplaires connus dans les collections européennes, preuve qu'un modèle particulièrement réussi pouvait être copié encore et encore à travers l'Empire, chaque atelier y ajoutant ses propres nuances.","en":"Mars, god of war, held a special place in the Roman imagination: unlike his Greek counterpart Ares, often treated with ambivalence, Mars was revered as the mythical father of Rome itself, through Romulus and Remus. This head belongs to a specific sculptural type documented across several known examples in European collections — proof that a particularly successful model could be copied again and again throughout the Empire, each workshop adding its own subtle variations.","es":"Marte, dios de la guerra, ocupaba un lugar aparte en el imaginario romano: a diferencia de su equivalente griego Ares, tratado a menudo con ambivalencia, Marte era venerado como el padre mítico de la propia Roma, a través de Rómulo y Remo. Esta cabeza pertenece a un tipo escultórico preciso, documentado en varios ejemplares conocidos en colecciones europeas, prueba de que un modelo especialmente logrado podía copiarse una y otra vez por todo el Imperio, cada taller añadiendo sus propios matices."}},{"id":"athena-statue","meta":{"fr":{"t":"Athéna","m":"Fin 1er s. av. n. è.-début 1er s. · Collection Giustiniani"},"en":{"t":"Athena","m":"Late 1st c. BCE–early 1st c. · Giustiniani Collection"},"es":{"t":"Atenea","m":"Fines s. I a.e.c.-inicios s. I · Colección Giustiniani"}},"txt":{"fr":"Cette Athéna casquée porte en réalité sa troisième tête. La première a disparu depuis longtemps ; la deuxième, coiffée d'un simple casque, n'est connue que par des dessins d'archives ; la troisième, celle que vous voyez, a été ajoutée après l'entrée de la statue dans la collection Torlonia — probablement en même temps que le petit hibou posé sur son bras gauche. Ce choix n'est pas anodin : le hibou est à la fois l'attribut traditionnel d'Athéna, déesse tutélaire d'Athènes, et l'emblème personnel de la famille Torlonia elle-même. Une seule sculpture, deux blasons superposés, à seize siècles d'écart.","en":"This helmeted Athena is actually on her third head. The first vanished long ago; the second, wearing a simple helmet, is known only from archival drawings; the third, the one you see now, was added after the statue entered the Torlonia Collection — likely at the same time as the small owl now resting on her left arm. That choice wasn't casual: the owl is both Athena's traditional attribute, as patron goddess of Athens, and the Torlonia family's own personal emblem. One sculpture, two coats of arms layered on top of each other, sixteen centuries apart.","es":"Esta Atenea con casco está, de hecho, en su tercera cabeza. La primera desapareció hace mucho; la segunda, con un simple casco, solo se conoce por dibujos de archivo; la tercera, la que ve ahora, se añadió después de que la estatua entrara en la colección Torlonia, probablemente al mismo tiempo que el pequeño búho que descansa en su brazo izquierdo. Esa elección no fue casual: el búho es a la vez el atributo tradicional de Atenea, diosa patrona de Atenas, y el emblema personal de la propia familia Torlonia. Una sola escultura, dos blasones superpuestos, con dieciséis siglos de diferencia."}},{"id":"artemis-huntress","meta":{"fr":{"t":"Artémis chasseresse","m":"2e moitié du 2e s. · Collection Giustiniani"},"en":{"t":"Artemis the Huntress","m":"2nd half of 2nd c. · Giustiniani Collection"},"es":{"t":"Ártemis cazadora","m":"2.ª mitad del s. II · Colección Giustiniani"}},"txt":{"fr":"Une autre Artémis vous attend ici, radicalement différente de celle d'Éphèse croisée plus tôt dans le parcours : déesse de la chasse, des espaces sauvages et de la lune, montrée avec son arc et accompagnée d'un chien de chasse. Là où l'Artémis d'Éphèse incarnait une puissance protectrice presque cosmique, celle-ci exprime une indépendance farouche, ancrée dans la nature et le mouvement — deux facettes bien distinctes d'une même déesse, que les Romains n'ont jamais cherché à réduire à une seule image.","en":"Another Artemis awaits here, radically different from the Ephesian one you may have met earlier in the tour: goddess of the hunt, wild places, and the moon, shown here with her bow and a hunting dog at her side. Where the Ephesian Artemis embodied an almost cosmic protective power, this one expresses a fierce independence, rooted in nature and motion — two quite distinct facets of the same goddess, which the Romans never tried to flatten into a single image.","es":"Aquí le espera otra Ártemis, radicalmente distinta de la de Éfeso que quizás vio antes en el recorrido: diosa de la caza, los espacios salvajes y la luna, representada aquí con su arco y un perro de caza a su lado. Donde la Ártemis de Éfeso encarnaba un poder protector casi cósmico, esta expresa una independencia feroz, anclada en la naturaleza y el movimiento: dos facetas bien distintas de una misma diosa, que los romanos nunca intentaron reducir a una sola imagen."}},{"id":"hercules-statue","meta":{"fr":{"t":"Hercule","m":"Fin du 2e s. · Acquisition Torlonia"},"en":{"t":"Hercules","m":"Late 2nd c. · Torlonia acquisition"},"es":{"t":"Hércules","m":"Fines del s. II · Adquisición Torlonia"}},"txt":{"fr":"Après l'avoir vu affronter ses douze travaux sur deux sarcophages différents, voici Hercule lui-même, massue à la main, drapé dans la peau du lion de Némée, premier de ses exploits légendaires. Pour les Romains, Hercule incarnait la virtus : le courage, l'endurance, la force mise au service d'un bien supérieur. Les empereurs eux-mêmes ont parfois emprunté son image pour se présenter en protecteurs héroïques de l'État — la musculature du héros devenant, par extension, une métaphore visuelle du pouvoir romain lui-même.","en":"Having already watched him battle through his twelve labours on two different sarcophagi, here is Hercules himself, club in hand, draped in the skin of the Nemean lion, the first of his legendary feats. For the Romans, Hercules embodied virtus: courage, endurance, strength placed in service of a greater good. Emperors themselves sometimes borrowed his image to present themselves as the state's heroic protectors — the hero's musculature becoming, by extension, a visual metaphor for Roman power itself.","es":"Después de verlo enfrentar sus doce trabajos en dos sarcófagos distintos, aquí está Hércules mismo, maza en mano, envuelto en la piel del león de Nemea, la primera de sus hazañas legendarias. Para los romanos, Hércules encarnaba la virtus: el valor, la resistencia, la fuerza puesta al servicio de un bien superior. Los propios emperadores tomaron a veces prestada su imagen para presentarse como protectores heroicos del Estado: la musculatura del héroe convertida, por extensión, en una metáfora visual del propio poder romano."}},{"id":"silenus-satyr","meta":{"fr":{"t":"Silène, le vieux satyre","m":"1er s. · Collection Giustiniani"},"en":{"t":"Silenus, the Old Satyr","m":"1st c. · Giustiniani Collection"},"es":{"t":"Sileno, el viejo sátiro","m":"s. I · Colección Giustiniani"}},"txt":{"fr":"Mi-homme, mi-bête, Silène est le plus âgé et le plus ivre des satyres, précepteur et compagnon fidèle du dieu Bacchus. Sa sagesse trouble, née du vin autant que d'une expérience millénaire, pouvait aussi bien égarer qu'éclairer ceux qui la sollicitaient. Ici, le vieux Silène soutient un enfant endormi dans ses bras : selon les lectures, tantôt un jeune Dionysos qu'il élève et protège, tantôt une réinterprétation postérieure du groupe. Un détail amusant : cette photo a été prise à l'envers, mais l'inscription du cartel reste parfaitement lisible — la statue, elle, tient parfaitement debout dans la galerie.","en":"Half man, half beast, Silenus is the oldest and drunkest of the satyrs, tutor and faithful companion to the god Bacchus. His hazy wisdom, born as much of wine as of ancient experience, could just as easily mislead as enlighten those who sought it out. Here, the old Silenus cradles a sleeping child in his arms: depending on the reading, either the young Dionysus he raises and protects, or a later reinterpretation of the group. A small aside: the reference photo for this label happened to be upside down — the statue itself, of course, stands perfectly upright in the gallery.","es":"Mitad hombre, mitad bestia, Sileno es el más viejo y el más ebrio de los sátiros, preceptor y fiel compañero del dios Baco. Su sabiduría confusa, nacida tanto del vino como de una experiencia milenaria, podía tanto confundir como iluminar a quien la buscaba. Aquí, el viejo Sileno sostiene en brazos a un niño dormido: según la lectura, unas veces el joven Dioniso al que cría y protege, otras una reinterpretación posterior del grupo. Un pequeño detalle curioso: la foto de referencia de este cartel estaba al revés, pero la estatua, por supuesto, se mantiene perfectamente en pie en la sala."}}],"horssocle":[{"id":"torsion","placeholder":true,"meta":{"fr":{"t":"Torsion","m":"Aluminium soudé · 1965"},"en":{"t":"Torsion","m":"Welded aluminium · 1965"},"es":{"t":"Torsión","m":"Aluminio soldado · 1965"}},"txt":{"fr":"Dans les années soixante, la sculpture descend de son piédestal et occupe le sol, comme vous et moi. Cette spirale d'aluminium soudé ne représente rien : elle est simplement là, matière et tension. Tournez autour, elle change à chaque pas. C'est vous, en marchant, qui complétez l'œuvre.","en":"In the sixties, sculpture stepped down from its pedestal and took to the floor, like you and me. This spiral of welded aluminium represents nothing: it is simply there, matter and tension. Walk around it, it changes with every step. It is you, walking, who completes the work.","es":"En los años sesenta, la escultura baja de su pedestal y ocupa el suelo, como usted y yo. Esta espiral de aluminio soldado no representa nada: simplemente está ahí, materia y tensión. Camine a su alrededor, cambia a cada paso. Es usted, caminando, quien completa la obra."}},{"id":"suspension","placeholder":true,"meta":{"fr":{"t":"Suspension I","m":"Fibres et acier · 1972"},"en":{"t":"Suspension I","m":"Fibre and steel · 1972"},"es":{"t":"Suspensión I","m":"Fibras y acero · 1972"}},"txt":{"fr":"Une sculpture peut-elle flotter ? Suspendue au plafond, cette masse de fibres tissées défie la première loi du genre : le poids. L'art textile, longtemps relégué à l'artisanat, revendique ici sa place dans la grande sculpture, souple là où le marbre est dur, aérien là où le bronze est lourd.","en":"Can a sculpture float? Hanging from the ceiling, this mass of woven fibre defies the genre's first law: weight. Textile art, long relegated to craft, here claims its place in grand sculpture, supple where marble is hard, airborne where bronze is heavy.","es":"¿Puede flotar una escultura? Suspendida del techo, esta masa de fibras tejidas desafía la primera ley del género: el peso. El arte textil, largamente relegado a la artesanía, reivindica aquí su lugar en la gran escultura, flexible donde el mármol es duro, aéreo donde el bronce es pesado."}},{"id":"champ","placeholder":true,"meta":{"fr":{"t":"Champ de plâtre","m":"Installation · 1981"},"en":{"t":"Plaster Field","m":"Installation · 1981"},"es":{"t":"Campo de yeso","m":"Instalación · 1981"}},"txt":{"fr":"Des dizaines de fragments de plâtre répandus au sol, comme les ruines d'un atelier. Est-ce une œuvre détruite ou une œuvre en train de naître ? L'installation ne se regarde pas : elle s'arpente. Chaque visiteur trace son propre chemin entre les fragments, et ce chemin fait partie de l'œuvre.","en":"Dozens of plaster fragments scattered across the floor, like the ruins of a studio. Is this a destroyed work or one being born? An installation is not looked at: it is walked through. Each visitor traces their own path between the fragments, and that path is part of the work.","es":"Decenas de fragmentos de yeso esparcidos por el suelo, como las ruinas de un taller. ¿Es una obra destruida o una obra naciendo? La instalación no se mira: se recorre. Cada visitante traza su propio camino entre los fragmentos, y ese camino es parte de la obra."}},{"id":"acier","placeholder":true,"meta":{"fr":{"t":"Sans titre (acier Corten)","m":"Acier Corten · 1968"},"en":{"t":"Untitled (Corten Steel)","m":"Corten steel · 1968"},"es":{"t":"Sin título (acero Corten)","m":"Acero Corten · 1968"}},"txt":{"fr":"Cet acier rouille volontairement. Le Corten, matériau industriel, développe une peau orangée qui le protège, et cette rouille est exactement ce que l'artiste voulait montrer : le temps qui travaille. Pas de titre, pas de socle, pas de récit. Juste trois plaques, un équilibre, et la couleur du temps.","en":"This steel rusts on purpose. Corten, an industrial material, develops an orange skin that protects it, and this rust is exactly what the artist wanted to show: time at work. No title, no pedestal, no story. Just three plates, a balance, and the colour of time.","es":"Este acero se oxida a propósito. El Corten, material industrial, desarrolla una piel anaranjada que lo protege, y ese óxido es exactamente lo que el artista quería mostrar: el tiempo trabajando. Sin título, sin pedestal, sin relato. Solo tres placas, un equilibrio y el color del tiempo."}},{"id":"atelier","placeholder":true,"meta":{"fr":{"t":"L'atelier renversé","m":"Techniques mixtes · 1994"},"en":{"t":"The Overturned Studio","m":"Mixed media · 1994"},"es":{"t":"El taller volcado","m":"Técnicas mixtas · 1994"}},"txt":{"fr":"Une table de travail fixée au mur, ses outils figés en pleine chute. L'artiste renverse littéralement son atelier pour nous montrer l'envers de la création : le désordre, l'accident, le geste interrompu. La sculpture contemporaine ne cache plus sa fabrication, elle en fait son sujet.","en":"A worktable fixed to the wall, its tools frozen mid-fall. The artist literally overturns the studio to show us the underside of creation: disorder, accident, the interrupted gesture. Contemporary sculpture no longer hides its making, it makes it the subject.","es":"Una mesa de trabajo fijada a la pared, sus herramientas congeladas en plena caída. El artista voltea literalmente su taller para mostrarnos el reverso de la creación: el desorden, el accidente, el gesto interrumpido. La escultura contemporánea ya no oculta su fabricación: la convierte en su tema."}},{"id":"monument","placeholder":true,"meta":{"fr":{"t":"Monument mou","m":"Textile et mousse · 2003"},"en":{"t":"Soft Monument","m":"Textile and foam · 2003"},"es":{"t":"Monumento blando","m":"Textil y espuma · 2003"}},"txt":{"fr":"Un monument qui s'affaisse doucement sous son propre poids. Tout ce qu'un monument doit être, dur, vertical, éternel, celui-ci le refuse avec humour. En textile et en mousse, il pose une question sérieuse sous des airs de peluche : et si nos monuments pouvaient être tendres ?","en":"A monument gently sagging under its own weight. Everything a monument must be, hard, vertical, eternal, this one refuses with humour. In textile and foam, it asks a serious question in the guise of a plush toy: what if our monuments could be tender?","es":"Un monumento que se hunde suavemente bajo su propio peso. Todo lo que un monumento debe ser, duro, vertical, eterno, este lo rechaza con humor. En textil y espuma, plantea una pregunta seria con aires de peluche: ¿y si nuestros monumentos pudieran ser tiernos?"}}]}};</script>
+<script>
+/* =========================================================
+   MuseAudio v4 · plataforma multi-museo · 8 idiomas
+   Datos: window.MA (data/data.js) — funciona en file:// y Pages
+   ========================================================= */
+const LANGS=[
+  /* Idiomas oficiales de Quebec/Canadá primero, luego el resto de lenguas
+     latinas más habladas en Montreal, y las de escritura no latina al final
+     (necesitan más espacio visual y atención aparte al escanear la grilla). */
+  {code:'fr',native:'Français', bcp:'fr-CA'},
+  {code:'en',native:'English',  bcp:'en-CA'},
+  {code:'es',native:'Español',  bcp:'es-ES'},
+  {code:'pt',native:'Português',bcp:'pt-BR'},
+  {code:'it',native:'Italiano', bcp:'it-IT'},
+  {code:'tl',native:'Tagalog',  bcp:'fil'},
+  {code:'ar',native:'العربية',   bcp:'ar', rtl:true},
+  {code:'zh',native:'中文',      bcp:'zh-CN'},
+];
+const UI={
+fr:{heroEyebrow:'Audioguide multilingue',heroTitle:'Le musée, dans votre langue',
+    heroSub:'Des parcours audio gratuits, œuvre par œuvre, à écouter le téléphone en poche.',
+    s1:'Choisissez une exposition',s1s:'Et la langue de votre choix',
+    s2:'Appuyez sur lecture',s2s:'Les œuvres s\u2019enchaînent toutes seules',
+    s3:'Rangez votre téléphone',s3s:'Contrôles sur l\u2019écran verrouillé et les écouteurs',
+    museums:'Musées',moreMuseums:'D\u2019autres musées bientôt',explore:'Explorer',exhibitions:'Expositions en cours',
+    back:'Accueil',playAll:'Écouter le parcours',soon:'Bientôt',closing:'Derniers jours',
+    preparing:'Parcours en préparation',preparingSub:'Les œuvres seront ajoutées très bientôt.',
+    works:'œuvres',reorder:'Glissez ≡ pour réorganiser votre parcours',change:'Langue',paused:'En pause',
+    audioIn:'Audio disponible :',fallbackNote:'Ce parcours n\u2019est pas encore dans votre langue — lecture en',
+    tts:'Audio de démonstration (voix du navigateur). Gardez l\u2019écran allumé — les vraies narrations joueront écran verrouillé.',
+    langTitle:'Votre visite, dans votre langue',langSub:'Choisissez la langue de votre parcours audio',
+    transcript:'Texte de la narration',hp:'🎧 Pensez aux écouteurs — les salles vous remercient',
+    dl:'Hors ligne',dlDone:'Prêt hors ligne',doneTitle:'Parcours complété !',doneStats:'{n} œuvres écoutées · {e}',
+    favQ:'Quelle œuvre vous a le plus touché ?',favThanks:'Merci ! Votre vote aide à améliorer les parcours.',
+    share:'Partager ce parcours',another:'Explorer une autre exposition',
+    mailQ:'Être averti des nouveaux parcours ?',mailPh:'Votre courriel (optionnel)',
+    mailOk:'Merci ! À bientôt dans un musée.',mailErr:'Courriel invalide',
+    mailNote:'Optionnel · uniquement pour les nouveautés · jamais partagé ·',
+    footTxt:'Guide indépendant, non affilié aux musées mentionnés.',footLink:'Mentions légales et vie privée',
+    shareTxt:'Je viens de faire ce parcours audio au musée avec MuseAudio 🎧'},
+en:{heroEyebrow:'Multilingual audio guide',heroTitle:'The museum, in your language',
+    heroSub:'Free audio tours, work by work, to listen with your phone in your pocket.',
+    s1:'Choose an exhibition',s1s:'And the language of your choice',
+    s2:'Press play',s2s:'The works follow one another on their own',
+    s3:'Pocket your phone',s3s:'Controls on your lock screen and headphones',
+    museums:'Museums',moreMuseums:'More museums coming soon',explore:'Explore',exhibitions:'Current exhibitions',
+    back:'Home',playAll:'Play the tour',soon:'Coming soon',closing:'Final days',
+    preparing:'Tour in preparation',preparingSub:'The works will be added very soon.',
+    works:'works',reorder:'Drag ≡ to reorder your tour',change:'Language',paused:'Paused',
+    audioIn:'Audio available:',fallbackNote:'This tour isn\u2019t in your language yet — playing in',
+    tts:'Demo audio (browser voice). Keep the screen on — real narrations will play with the screen locked.',
+    langTitle:'Your visit, in your language',langSub:'Choose the language of your audio tour',
+    transcript:'Narration text',hp:'🎧 Headphones, please — the galleries thank you',
+    dl:'Offline',dlDone:'Ready offline',doneTitle:'Tour completed!',doneStats:'{n} works listened · {e}',
+    favQ:'Which work touched you the most?',favThanks:'Thank you! Your vote helps improve the tours.',
+    share:'Share this tour',another:'Explore another exhibition',
+    mailQ:'Get notified about new tours?',mailPh:'Your email (optional)',
+    mailOk:'Thanks! See you in a museum.',mailErr:'Invalid email',
+    mailNote:'Optional · new tours only · never shared ·',
+    footTxt:'Independent guide, not affiliated with the museums mentioned.',footLink:'Legal notice & privacy',
+    shareTxt:'I just did this audio tour at the museum with MuseAudio 🎧'},
+es:{heroEyebrow:'Audioguía multilingüe',heroTitle:'El museo, en tu idioma',
+    heroSub:'Recorridos de audio gratuitos, obra por obra, para escuchar con el teléfono en el bolsillo.',
+    s1:'Elige una exposición',s1s:'Y el idioma que prefieras',
+    s2:'Pulsa reproducir',s2s:'Las obras se encadenan solas',
+    s3:'Guarda el teléfono',s3s:'Controles en la pantalla bloqueada y los audífonos',
+    museums:'Museos',moreMuseums:'Más museos próximamente',explore:'Explorar',exhibitions:'Exposiciones en curso',
+    back:'Inicio',playAll:'Reproducir el recorrido',soon:'Próximamente',closing:'Últimos días',
+    preparing:'Recorrido en preparación',preparingSub:'Las obras se añadirán muy pronto.',
+    works:'obras',reorder:'Arrastra ≡ para reordenar tu recorrido',change:'Idioma',paused:'En pausa',
+    audioIn:'Audio disponible:',fallbackNote:'Este recorrido aún no está en tu idioma — se reproduce en',
+    tts:'Audio de demostración (voz del navegador). Mantén la pantalla encendida — las narraciones reales sonarán con la pantalla bloqueada.',
+    langTitle:'Tu visita, en tu idioma',langSub:'Elige el idioma de tu recorrido de audio',
+    transcript:'Texto de la narración',hp:'🎧 Mejor con audífonos — las salas lo agradecen',
+    dl:'Sin conexión',dlDone:'Listo sin conexión',doneTitle:'¡Recorrido completado!',doneStats:'{n} obras escuchadas · {e}',
+    favQ:'¿Qué obra te tocó más?',favThanks:'¡Gracias! Tu voto ayuda a mejorar los recorridos.',
+    share:'Compartir este recorrido',another:'Explorar otra exposición',
+    mailQ:'¿Te avisamos de nuevos recorridos?',mailPh:'Tu correo (opcional)',
+    mailOk:'¡Gracias! Nos vemos en un museo.',mailErr:'Correo inválido',
+    mailNote:'Opcional · solo novedades · nunca se comparte ·',
+    footTxt:'Guía independiente, no afiliada a los museos mencionados.',footLink:'Avisos legales y privacidad',
+    shareTxt:'Acabo de hacer este recorrido de audio en el museo con MuseAudio 🎧'},
+pt:{heroEyebrow:'Audioguia multilíngue',heroTitle:'O museu, no seu idioma',
+    heroSub:'Percursos de áudio gratuitos, obra por obra, para ouvir com o telefone no bolso.',
+    s1:'Escolha uma exposição',s1s:'E o idioma de sua preferência',
+    s2:'Aperte play',s2s:'As obras se encadeiam sozinhas',
+    s3:'Guarde o telefone',s3s:'Controles na tela bloqueada e nos fones',
+    museums:'Museus',moreMuseums:'Mais museus em breve',explore:'Explorar',exhibitions:'Exposições em cartaz',
+    back:'Início',playAll:'Reproduzir o percurso',soon:'Em breve',closing:'Últimos dias',
+    preparing:'Percurso em preparação',preparingSub:'As obras serão adicionadas em breve.',
+    works:'obras',reorder:'Arraste ≡ para reordenar seu percurso',change:'Idioma',paused:'Pausado',
+    audioIn:'Áudio disponível:',fallbackNote:'Este percurso ainda não está no seu idioma — reproduzindo em',
+    tts:'Áudio de demonstração (voz do navegador). Mantenha a tela ligada — as narrações reais tocarão com a tela bloqueada.',
+    langTitle:'Sua visita, no seu idioma',langSub:'Escolha o idioma do seu percurso de áudio',
+    transcript:'Texto da narração',hp:'🎧 Use fones de ouvido — as salas agradecem',
+    dl:'Offline',dlDone:'Pronto offline',doneTitle:'Percurso concluído!',doneStats:'{n} obras ouvidas · {e}',
+    favQ:'Qual obra tocou você mais?',favThanks:'Obrigado! Seu voto ajuda a melhorar os percursos.',
+    share:'Compartilhar este percurso',another:'Explorar outra exposição',
+    mailQ:'Quer saber dos novos percursos?',mailPh:'Seu e-mail (opcional)',
+    mailOk:'Obrigado! Até logo num museu.',mailErr:'E-mail inválido',
+    mailNote:'Opcional · só novidades · nunca compartilhado ·',
+    footTxt:'Guia independente, não afiliado aos museus mencionados.',footLink:'Avisos legais e privacidade',
+    shareTxt:'Acabei de fazer este percurso de áudio no museu com MuseAudio 🎧'},
+it:{heroEyebrow:'Audioguida multilingue',heroTitle:'Il museo, nella tua lingua',
+    heroSub:'Percorsi audio gratuiti, opera per opera, da ascoltare con il telefono in tasca.',
+    s1:'Scegli una mostra',s1s:'E la lingua che preferisci',
+    s2:'Premi play',s2s:'Le opere si susseguono da sole',
+    s3:'Metti via il telefono',s3s:'Controlli sulla schermata di blocco e sugli auricolari',
+    museums:'Musei',moreMuseums:'Altri musei in arrivo',explore:'Esplora',exhibitions:'Mostre in corso',
+    back:'Home',playAll:'Ascolta il percorso',soon:'Presto',closing:'Ultimi giorni',
+    preparing:'Percorso in preparazione',preparingSub:'Le opere saranno aggiunte molto presto.',
+    works:'opere',reorder:'Trascina ≡ per riordinare il percorso',change:'Lingua',paused:'In pausa',
+    audioIn:'Audio disponibile:',fallbackNote:'Questo percorso non è ancora nella tua lingua — riproduzione in',
+    tts:'Audio dimostrativo (voce del browser). Tieni lo schermo acceso — le narrazioni reali suoneranno a schermo bloccato.',
+    langTitle:'La tua visita, nella tua lingua',langSub:'Scegli la lingua del tuo percorso audio',
+    transcript:'Testo della narrazione',hp:'🎧 Meglio con gli auricolari — le sale ringraziano',
+    dl:'Offline',dlDone:'Pronto offline',doneTitle:'Percorso completato!',doneStats:'{n} opere ascoltate · {e}',
+    favQ:'Quale opera ti ha toccato di più?',favThanks:'Grazie! Il tuo voto aiuta a migliorare i percorsi.',
+    share:'Condividi questo percorso',another:'Esplora un\u2019altra mostra',
+    mailQ:'Vuoi sapere dei nuovi percorsi?',mailPh:'La tua email (opzionale)',
+    mailOk:'Grazie! A presto in un museo.',mailErr:'Email non valida',
+    mailNote:'Opzionale · solo novità · mai condivisa ·',
+    footTxt:'Guida indipendente, non affiliata ai musei citati.',footLink:'Note legali e privacy',
+    shareTxt:'Ho appena fatto questo percorso audio al museo con MuseAudio 🎧'},
+ar:{heroEyebrow:'دليل صوتي متعدد اللغات',heroTitle:'المتحف بلغتك',
+    heroSub:'جولات صوتية مجانية، عملاً فنياً تلو الآخر، استمع إليها وهاتفك في جيبك.',
+    s1:'اختر معرضاً',s1s:'واللغة التي تفضلها',
+    s2:'اضغط تشغيل',s2s:'الأعمال تتوالى تلقائياً',
+    s3:'ضع هاتفك في جيبك',s3s:'أزرار التحكم على شاشة القفل والسماعات',
+    museums:'المتاحف',moreMuseums:'متاحف أخرى قريباً',explore:'استكشف',exhibitions:'المعارض الحالية',
+    back:'الرئيسية',playAll:'تشغيل الجولة',soon:'قريباً',closing:'الأيام الأخيرة',
+    preparing:'الجولة قيد الإعداد',preparingSub:'ستُضاف الأعمال قريباً جداً.',
+    works:'أعمال',reorder:'اسحب ≡ لإعادة ترتيب جولتك',change:'اللغة',paused:'متوقف مؤقتاً',
+    audioIn:'الصوت متوفر بـ:',fallbackNote:'هذه الجولة ليست بلغتك بعد — التشغيل بـ',
+    tts:'صوت تجريبي (صوت المتصفح). أبقِ الشاشة مضاءة — الروايات الحقيقية ستعمل والشاشة مقفلة.',
+    langTitle:'زيارتك، بلغتك',langSub:'اختر لغة جولتك الصوتية',
+    transcript:'نص الرواية',hp:'🎧 يُفضَّل استخدام السماعات — القاعات تشكرك',
+    dl:'دون اتصال',dlDone:'جاهز دون اتصال',doneTitle:'اكتملت الجولة!',doneStats:'{n} أعمال استمعت إليها · {e}',
+    favQ:'أي عمل لمس قلبك أكثر؟',favThanks:'شكراً! صوتك يساعد على تحسين الجولات.',
+    share:'شارك هذه الجولة',another:'استكشف معرضاً آخر',
+    mailQ:'هل نخبرك بالجولات الجديدة؟',mailPh:'بريدك الإلكتروني (اختياري)',
+    mailOk:'شكراً! نراك في متحف قريباً.',mailErr:'بريد إلكتروني غير صالح',
+    mailNote:'اختياري · للجديد فقط · لا يُشارك أبداً ·',
+    footTxt:'دليل مستقل، غير تابع للمتاحف المذكورة.',footLink:'الشروط القانونية والخصوصية',
+    shareTxt:'أنهيت للتو هذه الجولة الصوتية في المتحف مع MuseAudio 🎧'},
+zh:{heroEyebrow:'多语言语音导览',heroTitle:'用您的语言逛博物馆',
+    heroSub:'免费语音导览，逐件作品讲解，手机放进口袋即可聆听。',
+    s1:'选择展览',s1s:'以及您偏好的语言',
+    s2:'按下播放',s2s:'作品讲解自动连续播放',
+    s3:'收起手机',s3s:'锁屏和耳机上均可控制',
+    museums:'博物馆',moreMuseums:'更多博物馆即将上线',explore:'探索',exhibitions:'当前展览',
+    back:'首页',playAll:'播放导览',soon:'即将推出',closing:'最后几天',
+    preparing:'导览筹备中',preparingSub:'作品即将上线。',
+    works:'件作品',reorder:'拖动 ≡ 重新排序您的路线',change:'语言',paused:'已暂停',
+    audioIn:'语音语言：',fallbackNote:'此导览暂无您的语言 — 以下列语言播放：',
+    tts:'演示音频（浏览器语音）。请保持屏幕常亮 — 正式讲解将支持锁屏播放。',
+    langTitle:'您的参观，您的语言',langSub:'请选择语音导览的语言',
+    transcript:'讲解文本',hp:'🎧 请佩戴耳机 — 展厅感谢您',
+    dl:'离线',dlDone:'已可离线',doneTitle:'导览完成！',doneStats:'已听 {n} 件作品 · {e}',
+    favQ:'哪件作品最打动您？',favThanks:'谢谢！您的投票将帮助改进导览。',
+    share:'分享此导览',another:'探索其他展览',
+    mailQ:'新导览上线时通知您？',mailPh:'您的邮箱（可选）',
+    mailOk:'谢谢！博物馆见。',mailErr:'邮箱格式无效',
+    mailNote:'可选 · 仅限新导览 · 绝不共享 ·',
+    footTxt:'独立导览，与所提及博物馆无关联。',footLink:'法律声明与隐私',
+    shareTxt:'我刚用 MuseAudio 完成了博物馆语音导览 🎧'},
+tl:{heroEyebrow:'Multilingguwal na audio guide',heroTitle:'Ang museo, sa wika mo',
+    heroSub:'Libreng audio tour, bawat obra, na maririnig habang nakabulsa ang telepono.',
+    s1:'Pumili ng eksibisyon',s1s:'At ang wikang gusto mo',
+    s2:'Pindutin ang play',s2s:'Kusang magsusunud-sunod ang mga obra',
+    s3:'Ibulsa ang telepono',s3s:'Kontrol sa lock screen at earphones',
+    museums:'Mga museo',moreMuseums:'Marami pang museo sa lalong madaling panahon',explore:'Tuklasin',exhibitions:'Kasalukuyang eksibisyon',
+    back:'Home',playAll:'I-play ang tour',soon:'Malapit na',closing:'Mga huling araw',
+    preparing:'Inihahanda ang tour',preparingSub:'Idaragdag ang mga obra sa lalong madaling panahon.',
+    works:'obra',reorder:'I-drag ang ≡ para ayusin ang iyong tour',change:'Wika',paused:'Naka-pause',
+    audioIn:'Audio sa:',fallbackNote:'Wala pa sa wika mo ang tour na ito — magpe-play sa',
+    tts:'Demo audio (boses ng browser). Panatilihing bukas ang screen — ang totoong audio ay tutugtog kahit naka-lock.',
+    langTitle:'Ang pagbisita mo, sa wika mo',langSub:'Piliin ang wika ng iyong audio tour',
+    transcript:'Teksto ng narasyon',hp:'🎧 Gumamit ng earphones — pasasalamatan ka ng mga gallery',
+    dl:'Offline',dlDone:'Handa offline',doneTitle:'Tapos na ang tour!',doneStats:'{n} obrang napakinggan · {e}',
+    favQ:'Aling obra ang pinaka-tumatak sa iyo?',favThanks:'Salamat! Nakakatulong ang boto mo.',
+    share:'Ibahagi ang tour na ito',another:'Tumuklas ng ibang eksibisyon',
+    mailQ:'Gusto mo bang malaman ang mga bagong tour?',mailPh:'Email mo (opsyonal)',
+    mailOk:'Salamat! Kita tayo sa museo.',mailErr:'Di-wastong email',
+    mailNote:'Opsyonal · mga bago lang · hindi ibinabahagi ·',
+    footTxt:'Independiyenteng guide, walang kaugnayan sa mga museong binanggit.',footLink:'Legal at privacy',
+    shareTxt:'Katatapos ko lang ng audio tour sa museo gamit ang MuseAudio 🎧'},
+};
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+
+/* ---------- estado ---------- */
+const WEBHOOK_URL='';  // ← webhook n8n para métricas anónimas y correos (vacío = solo localStorage)
+const DATA=window.MA;
+let museum=null,expo=null,expoId=null,WORKS=[],idx=-1,speed=1,ambientOn=false,usingTTS=false;
+let played=new Set(),hpShown=false;
+const SPEEDS=[1,1.25,1.5,0.8];
+let lang=localStorage.getItem('ma_lang')||null;
+const audio=new Audio();
+const ambient=new Audio();ambient.loop=true;ambient.volume=0.14;
+const $=s=>document.querySelector(s);
+const t=k=>UI[lang][k];
+const N=(obj)=>obj[lang]||obj.en||obj.fr; // nombre localizado con fallback
+
+/* ---------- tema ---------- */
+function setAccent(e){
+  const r=document.documentElement.style;
+  r.setProperty('--acc',e?e.accentUI:'#8a6428');
+  r.setProperty('--glow',e?e.accent:'#c8964b');
+}
+/* ---------- vistas ---------- */
+function show(v){['vHome','vMuseum','vExpo','vDone'].forEach(x=>$('#'+x).classList.toggle('on',x===v));window.scrollTo(0,0);}
+function applyI18n(){
+  document.documentElement.lang=lang;
+  document.documentElement.dir=(LANGS.find(l=>l.code===lang)||{}).rtl?'rtl':'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+  const sw=t('change')+' · '+lang.toUpperCase();
+  ['langSwitch','langSwitch2','langSwitch3'].forEach(i=>$('#'+i).textContent=sw);
+  $('#ttsNote').textContent=t('tts');
+  $('#reorderHint').textContent=WORKS.length>1?t('reorder'):'';
+  $('#footTxt').textContent=t('footTxt');
+  $('#footLink').textContent=t('footLink');
+  $('#tTitleTxt').textContent=t('transcript');
+  if(!$('#dlBtn').classList.contains('done'))$('#dlSt').textContent=t('dl');
+  $('#mailIn').placeholder=t('mailPh');
+}
+
+/* ---------- idioma ---------- */
+function buildLangScreen(){
+  const g=$('#langGrid');g.innerHTML='';
+  const guess=(navigator.language||'fr').slice(0,2);
+  const gu=UI[guess]||UI.fr;
+  $('#langTitle').textContent=gu.langTitle;
+  $('#langSub').textContent=gu.langSub;
+  LANGS.forEach(l=>{
+    const b=document.createElement('button');
+    b.className='langBtn';
+    b.textContent=l.native;
+    b.onclick=()=>setLang(l.code);
+    g.appendChild(b);
+  });
+}
+function setLang(code){
+  lang=code;localStorage.setItem('ma_lang',code);
+  $('#vLang').classList.remove('on');
+  applyI18n();renderHome();
+  if(expoId){openExpo(expoId,false);}
+  else if(museum){openMuseum(museum.id,false);}
+  else{show('vHome');handleHash();}
+}
+const askLang=()=>$('#vLang').classList.add('on');
+['langSwitch','langSwitch2','langSwitch3'].forEach(i=>$('#'+i).onclick=askLang);
+$('#brandBtn').onclick=goHome;
+function goHome(){museum=null;expo=null;expoId=null;setAccent(null);history.replaceState(null,'','#');show('vHome');renderHome();}
+
+/* ---------- landing ---------- */
+function renderHome(){
+  const c=$('#musCards');c.innerHTML='';
+  DATA.museums.forEach(m=>{
+    const card=document.createElement('button');
+    card.className='musCard';
+    card.innerHTML=`<div class="eyebrow">${m.short}</div>
+      <h3>${N(m.name)}</h3><div class="city">${N(m.city)}</div>
+      <div class="foot"><span class="n">${m.expos.length} ${t('exhibitions').toLowerCase()}</span><span class="go">${t('explore')} →</span></div>`;
+    card.onclick=()=>openMuseum(m.id,true);
+    c.appendChild(card);
+  });
+  const soon=document.createElement('div');
+  soon.className='musCard soonCard';
+  soon.innerHTML=`<h3 style="color:var(--dim)">${t('moreMuseums')}</h3>`;
+  c.appendChild(soon);
+}
+
+/* ---------- museo ---------- */
+function openMuseum(id,push){
+  museum=DATA.museums.find(m=>m.id===id);
+  if(!museum)return;
+  if(push)history.replaceState(null,'','#m/'+id);
+  $('#musEyebrow').textContent=museum.short;
+  $('#musTitle').textContent=N(museum.name);
+  $('#musCity').textContent=N(museum.city);
+  const c=$('#expoCards');c.innerHTML='';
+  museum.expos.forEach(eid=>{
+    const e=DATA.expos[eid];
+    const count=(DATA.works[eid]||[]).length;
+    const card=document.createElement('button');
+    card.className='expoCard';
+    card.style.setProperty('--card-acc',e.accentUI);
+    const badge=e.status==='closing'?`<span class="badge">${t('closing')}</span>`
+      :count===0?`<span class="badge">${t('soon')}</span>`:'';
+    card.innerHTML=`${badge}
+      <div class="eyebrow">${museum.short}</div>
+      <h2>${N(e.title)}</h2>
+      <div class="tag">${N(e.tag)}</div>
+      <div class="foot">
+        <span class="dates">${N(e.dates)}${count?` · ${count} ${t('works')}`:''}</span>
+        <span class="chips">${e.langs.map(l=>`<span class="chip">${l}</span>`).join('')}</span>
+      </div>`;
+    card.onclick=()=>openExpo(eid,true);
+    c.appendChild(card);
+  });
+  applyI18n();show('vMuseum');
+}
+$('#backHome').onclick=goHome;
+
+/* ---------- exposición ---------- */
+function openExpo(id,push){
+  const e=DATA.expos[id];
+  if(!e)return;
+  expo=e;expoId=id;
+  if(!museum)museum=DATA.museums.find(m=>m.expos.includes(id))||DATA.museums[0];
+  setAccent(e);
+  if(push)history.replaceState(null,'','#expo/'+id);
+  const saved=JSON.parse(localStorage.getItem('ma_order_'+id)||'null');
+  WORKS=orderWorks(DATA.works[id]||[],saved);
+  $('#backMusTxt').textContent=museum.short;
+  $('#expoEyebrow').textContent=museum.short;
+  $('#expoTitle').textContent=N(e.title);
+  $('#expoSub').textContent=N(e.dates);
+  // nota de idiomas disponibles / fallback
+  const note=$('#langNote');
+  if(!e.langs.includes(lang)&&WORKS.length){
+    const fb=e.langs.includes('en')?'en':e.langs[0];
+    note.innerHTML=t('fallbackNote')+' <b>'+fb.toUpperCase()+'</b> · '+t('audioIn')+' '+e.langs.map(x=>x.toUpperCase()).join(' · ');
+  }else if(WORKS.length){
+    note.innerHTML=t('audioIn')+' <b>'+e.langs.map(x=>x.toUpperCase()).join(' · ')+'</b>';
+  }else note.innerHTML='';
+  $('#expoActions').style.display=WORKS.length?'flex':'none';
+  $('#dlBtn').classList.remove('done','busy');
+  ambient.src=e.ambient||'';
+  renderList();applyI18n();show('vExpo');syncAmbUI();
+}
+function orderWorks(works,saved){
+  if(!saved)return works.slice();
+  const map=Object.fromEntries(works.map(w=>[w.id,w]));
+  const out=saved.map(i=>map[i]).filter(Boolean);
+  works.forEach(w=>{if(!saved.includes(w.id))out.push(w);});
+  return out;
+}
+$('#backMus').onclick=()=>{expo=null;expoId=null;setAccent(null);openMuseum(museum.id,true);};
+
+const numeral=i=>expo&&expo.numerals==='roman'?ROMAN[i]:String(i+1);
+const workLang=w=>w.txt[lang]?lang:(w.txt.en?'en':Object.keys(w.txt)[0]); // fallback por obra
+const wMeta=w=>w.meta[workLang(w)]||w.meta.fr;
+const locOf=w=>w.loc?(typeof w.loc==='string'?w.loc:(w.loc[lang]||w.loc.en||w.loc.fr||'')):'';
+
+function renderList(){
+  const ol=$('#worksList');ol.innerHTML='';
+  if(!WORKS.length){
+    ol.innerHTML=`<div class="empty"><div class="serif">${t('preparing')}</div>${t('preparingSub')}</div>`;
+    return;
+  }
+  WORKS.forEach((w,i)=>{
+    const li=document.createElement('li');
+    li.className='work';li.tabIndex=0;li.dataset.i=i;li.id='oeuvre-'+w.id;
+    li.innerHTML=`
+      <div class="medal s">${numeral(i)}</div>
+      <div class="info">
+        <h3>${wMeta(w).t}</h3>
+        <div class="meta">${wMeta(w).m}</div>
+        ${locOf(w)?`<div class="loc">${locOf(w)}</div>`:''}
+      </div>
+      <div class="eqIcon"><span></span><span></span><span></span></div>
+      <button class="handle" aria-label="reorder">≡</button>`;
+    li.onclick=e=>{if(!e.target.closest('.handle'))playIndex(i,true);};
+    li.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();playIndex(i,true);}};
+    ol.appendChild(li);
+  });
+  enableDrag(ol);markActive();
+}
+
+/* ---------- drag & drop ---------- */
+function enableDrag(ol){
+  let el=null;
+  ol.querySelectorAll('.handle').forEach(h=>{
+    h.addEventListener('pointerdown',ev=>{ev.preventDefault();el=h.closest('.work');el.classList.add('dragging');h.setPointerCapture(ev.pointerId);});
+    h.addEventListener('pointermove',ev=>{
+      if(!el)return;
+      const rest=[...ol.querySelectorAll('.work:not(.dragging)')];
+      const after=rest.find(r=>ev.clientY<r.getBoundingClientRect().top+r.offsetHeight/2);
+      after?ol.insertBefore(el,after):ol.appendChild(el);
+    });
+    h.addEventListener('pointerup',()=>{
+      if(!el)return;
+      el.classList.remove('dragging');el=null;
+      const ids=[...ol.querySelectorAll('.work')].map(x=>x.id.replace('oeuvre-',''));
+      WORKS=orderWorks(WORKS,ids);
+      localStorage.setItem('ma_order_'+expoId,JSON.stringify(ids));
+      renderList();
+    });
+  });
+}
+
+/* ---------- reproducción ---------- */
+const isPlaying=()=>usingTTS?speechSynthesis.speaking&&!speechSynthesis.paused:(!audio.paused&&!audio.ended);
+
+function playIndex(i,expand){
+  stopNarration();
+  idx=i;
+  const w=WORKS[i];
+  played.add(w.id);
+  if(!hpShown){hpShown=true;toast(t('hp'));}
+  history.replaceState(null,'','#expo/'+expoId+'/oeuvre-'+w.id);
+  fillNowPlaying(w,i);
+  $('#mini').classList.add('open');
+  if(expand)$('#now').classList.add('open');
+  usingTTS=false;
+  audio.src=`audio/${w.id}_${workLang(w)}.mp3`;
+  audio.playbackRate=speed;
+  audio.play().then(()=>setMediaSession(w,i)).catch(()=>startTTS(w));
+  if(ambientOn)ambient.play().catch(()=>{});
+  updateUI();
+}
+function fillNowPlaying(w,i){
+  $('#nowMedal').textContent=numeral(i);
+  $('#miniMedal').textContent=numeral(i);
+  $('#nTitle').textContent=wMeta(w).t;
+  $('#miniTitle').textContent=wMeta(w).t;
+  $('#nMeta').textContent=wMeta(w).m;
+  $('#nLoc').textContent=locOf(w);
+  $('#nExpo').textContent=N(expo.title);
+  $('#tBody').textContent=w.txt[workLang(w)];
+}
+function startTTS(w){
+  if(!('speechSynthesis' in window))return;
+  usingTTS=true;
+  $('#ttsNote').classList.add('show');
+  const wl=workLang(w);
+  const u=new SpeechSynthesisUtterance(w.txt[wl]);
+  u.lang=(LANGS.find(l=>l.code===wl)||{bcp:'fr-CA'}).bcp;
+  u.rate=speed;
+  u.onend=()=>{updateUI();next();};
+  speechSynthesis.speak(u);
+  updateUI();
+}
+function stopNarration(){
+  audio.pause();audio.removeAttribute('src');audio.load();
+  if('speechSynthesis' in window)speechSynthesis.cancel();
+  usingTTS=false;$('#ttsNote').classList.remove('show');
+}
+function togglePlay(){
+  if(idx<0){if(WORKS.length)playIndex(0,false);return;}
+  if(usingTTS){
+    if(speechSynthesis.paused)speechSynthesis.resume();
+    else if(speechSynthesis.speaking)speechSynthesis.pause();
+    else startTTS(WORKS[idx]);
+  }else{
+    audio.paused?audio.play().catch(()=>startTTS(WORKS[idx])):audio.pause();
+  }
+  if(ambientOn){setTimeout(()=>{isPlaying()?ambient.play().catch(()=>{}):ambient.pause();},90);}
+  setTimeout(updateUI,90);
+}
+const next=()=>{if(idx<WORKS.length-1)playIndex(idx+1,false);else{stopNarration();ambient.pause();updateUI();showDone();}};
+const prev=()=>{if(audio.currentTime>4&&!usingTTS){audio.currentTime=0;return;}if(idx>0)playIndex(idx-1,false);};
+$('#playBtn').onclick=togglePlay;
+$('#miniPlay').onclick=e=>{e.stopPropagation();togglePlay();};
+$('#nextBtn').onclick=next;
+$('#prevBtn').onclick=prev;
+$('#playAllBtn').onclick=()=>WORKS.length&&playIndex(0,true);
+$('#speedBtn').onclick=()=>{
+  speed=SPEEDS[(SPEEDS.indexOf(speed)+1)%SPEEDS.length];
+  $('#speedBtn').textContent=speed+'×';
+  audio.playbackRate=speed;
+  if(usingTTS&&isPlaying()){speechSynthesis.cancel();startTTS(WORKS[idx]);}
+};
+
+/* ---------- Media Session ---------- */
+function setMediaSession(w,i){
+  if(!('mediaSession' in navigator))return;
+  navigator.mediaSession.metadata=new MediaMetadata({
+    title:numeral(i)+' · '+wMeta(w).t,
+    artist:N(expo.title),
+    album:'MuseAudio',
+    artwork:[{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]
+  });
+  navigator.mediaSession.setActionHandler('play',togglePlay);
+  navigator.mediaSession.setActionHandler('pause',togglePlay);
+  navigator.mediaSession.setActionHandler('previoustrack',prev);
+  navigator.mediaSession.setActionHandler('nexttrack',next);
+  try{navigator.mediaSession.setActionHandler('seekto',d=>{if(audio.duration)audio.currentTime=d.seekTime;});}catch{}
+}
+
+/* ---------- ambiente ---------- */
+function toggleAmbient(){
+  ambientOn=!ambientOn;
+  if(ambientOn&&expo){ambient.play().catch(()=>{ambientOn=false;syncAmbUI();});}
+  else ambient.pause();
+  syncAmbUI();
+}
+function syncAmbUI(){['#ambBtn','#nAmb'].forEach(s=>{const b=$(s);b.classList.toggle('on',ambientOn);b.setAttribute('aria-pressed',ambientOn);});}
+$('#ambBtn').onclick=toggleAmbient;
+$('#nAmb').onclick=toggleAmbient;
+
+/* ---------- Now Playing ---------- */
+$('#mini').onclick=()=>$('#now').classList.add('open');
+$('#nowClose').onclick=()=>$('#now').classList.remove('open');
+$('#txtBtn').onclick=()=>{
+  const p=$('#transcript');
+  const on=!p.classList.contains('show');
+  p.classList.toggle('show',on);
+  $('#txtBtn').classList.toggle('on',on);
+  $('#txtBtn').setAttribute('aria-pressed',on);
+};
+
+/* ---------- toast ---------- */
+let toastTimer=null;
+function toast(msg){
+  const el=$('#toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+/* ---------- fin + voto + correo ---------- */
+function send(payload){
+  try{if(WEBHOOK_URL)fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({...payload,expo:expoId,lang,ts:Date.now()})});}catch{}
+}
+function showDone(){
+  $('#now').classList.remove('open');
+  $('#mini').classList.remove('open');
+  $('#doneTitle').textContent=t('doneTitle');
+  $('#doneStats').textContent=t('doneStats').replace('{n}',played.size).replace('{e}',N(expo.title));
+  $('#favQ').textContent=t('favQ');
+  $('#favThanks').textContent='';
+  $('#shareBtn').textContent=t('share');
+  $('#moreBtn').textContent=t('another');
+  $('#mailQ').textContent=t('mailQ');
+  $('#mailNote').innerHTML=t('mailNote')+' <a href="legal.html">'+t('footLink')+'</a>';
+  const g=$('#favGrid');g.innerHTML='';
+  WORKS.forEach((w,i)=>{
+    const b=document.createElement('button');
+    b.className='favBtn';
+    b.innerHTML='<span class="fN">'+numeral(i)+'</span>'+wMeta(w).t;
+    b.onclick=()=>{
+      g.querySelectorAll('.favBtn').forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+      $('#favThanks').textContent=t('favThanks');
+      localStorage.setItem('ma_fav_'+expoId,w.id);
+      send({type:'favorite',work:w.id});
+    };
+    g.appendChild(b);
+  });
+  send({type:'completed',works:played.size});
+  show('vDone');
+}
+$('#shareBtn').onclick=()=>{
+  const url=location.origin+location.pathname+'#expo/'+expoId;
+  const text=t('shareTxt')+' — '+N(expo.title);
+  if(navigator.share){navigator.share({title:'MuseAudio',text,url}).catch(()=>{});}
+  else window.open('https://wa.me/?text='+encodeURIComponent(text+' '+url),'_blank');
+};
+$('#moreBtn').onclick=()=>{played=new Set();expo=null;expoId=null;setAccent(null);openMuseum(museum.id,true);};
+$('#mailBtn').onclick=()=>{
+  const v=$('#mailIn').value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){toast(t('mailErr'));return;}
+  send({type:'subscribe',email:v});
+  localStorage.setItem('ma_mail','1');
+  $('#mailIn').value='';$('#mailIn').blur();
+  toast(t('mailOk'));
+};
+
+/* ---------- descarga offline ---------- */
+$('#dlBtn').onclick=async()=>{
+  if(!WORKS.length||$('#dlBtn').classList.contains('busy'))return;
+  const btn=$('#dlBtn');btn.classList.add('busy');
+  let ok=0;
+  const cache=('caches' in window)?await caches.open('museaudio-v4').catch(()=>null):null;
+  for(let i=0;i<WORKS.length;i++){
+    $('#dlSt').textContent=(i+1)+'/'+WORKS.length;
+    const url='audio/'+WORKS[i].id+'_'+workLang(WORKS[i])+'.mp3';
+    try{const res=await fetch(url);if(res.ok){if(cache)await cache.put(url,res.clone());ok++;}}catch{}
+  }
+  btn.classList.remove('busy');
+  if(ok===WORKS.length){btn.classList.add('done');$('#dlSt').textContent=t('dlDone');}
+  else $('#dlSt').textContent=ok+'/'+WORKS.length;
+};
+
+/* ---------- UI reproductor ---------- */
+audio.addEventListener('ended',()=>{updateUI();next();});
+audio.addEventListener('timeupdate',()=>{
+  const p=audio.duration?audio.currentTime/audio.duration*100:0;
+  $('#seek').value=p;$('#miniBar').style.width=p+'%';
+  $('#tCur').textContent=fmt(audio.currentTime);
+  $('#tTot').textContent=audio.duration?fmt(audio.duration):'–:––';
+});
+audio.addEventListener('play',updateUI);
+audio.addEventListener('pause',updateUI);
+$('#seek').oninput=e=>{if(!usingTTS&&audio.duration)audio.currentTime=e.target.value/100*audio.duration;};
+const fmt=s=>{s=Math.floor(s||0);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+function updateUI(){
+  const play='<path d="M8 5v14l11-7z"/>',pause='<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+  $('#playIcon').innerHTML=isPlaying()?pause:play;
+  $('#miniIcon').innerHTML=isPlaying()?pause:play;
+  if(idx>=0)$('#miniSt').textContent=isPlaying()?(expo?N(expo.title):''):t('paused');
+  markActive();
+}
+function markActive(){
+  document.querySelectorAll('.work').forEach(el=>{
+    const w=WORKS[idx];
+    const on=w&&el.id==='oeuvre-'+w.id;
+    el.classList.toggle('active',on);
+    el.classList.toggle('playing',on&&isPlaying());
+  });
+}
+setInterval(updateUI,600);
+
+/* ---------- deep links ---------- */
+function handleHash(){
+  const mm=location.hash.match(/^#m\/([\w-]+)$/);
+  const me=location.hash.match(/^#expo\/([\w-]+)(?:\/oeuvre-([\w-]+))?$/);
+  const legacy=location.hash.match(/^#oeuvre-([\w-]+)$/);
+  if(mm){openMuseum(mm[1],false);return;}
+  if(legacy){openExpo('torlonia',true);const i=WORKS.findIndex(w=>w.id===legacy[1]);if(i>=0)playIndex(i,true);return;}
+  if(!me)return;
+  openExpo(me[1],false);
+  if(me[2]){const i=WORKS.findIndex(w=>w.id===me[2]);
+    if(i>=0){document.getElementById('oeuvre-'+me[2])?.scrollIntoView({block:'center'});playIndex(i,true);}}
+}
+window.addEventListener('hashchange',()=>{if(lang)handleHash();});
+
+/* ---------- init ---------- */
+buildLangScreen();
+if(lang&&UI[lang]){setLang(lang);}else{$('#vLang').classList.add('on');}
+if(location.protocol!=='file:'&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
