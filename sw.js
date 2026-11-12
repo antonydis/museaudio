@@ -1,7 +1,6 @@
-/* MuseAudio SW — v2
-   - App shell y datos: network-first (siempre lo más fresco si hay red)
-   - Audios: cache-first (una vez escuchado, funciona sin WiFi de museo) */
-const VERSION = 'museaudio-shell-v6';
+/* MuseAudio · cache de la interfaz.
+   El modo offline de recorridos sigue desactivado hasta su validación. */
+const VERSION = 'museaudio-shell-v7';
 const SHELL = ['./', 'index.html', 'manifest.json'];
 
 self.addEventListener('install', e => {
