@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#faf8f3">
+<meta name="theme-color" content="#20211f">
 <meta name="description" content="MuseAudio — audioguide multilingue et gratuit pour vos visites au musée. Écoutez chaque œuvre, le téléphone dans la poche.">
 <title>MuseAudio — Le musée, dans votre langue</title>
 
@@ -18,6 +18,14 @@
 <meta name="twitter:description" content="Audioguide multilingue et gratuit pour vos visites au musée.">
 
 <link rel="manifest" href="manifest.json">
+<script id="theme-bootstrap">
+try{
+ if(localStorage.getItem('ma_theme')==='light'){
+  document.documentElement.dataset.theme='light';
+  document.querySelector('meta[name="theme-color"]').content='#f8f7f4';
+ }
+}catch(_){}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -314,12 +322,64 @@ body{font-size:16px;line-height:1.6}
 @media(max-width:380px){.view{padding-inline:17px}.expoCard,.musCard{padding-inline:15px}.work{gap:9px}}
 @media(prefers-reduced-motion:reduce){#now{transition:none}}
 
+
+/* Museum themes: charcoal by default, light by choice. */
+:root{
+ color-scheme:dark;--paper:#20211f;--card:#2a2b28;--txt:#f0eee8;
+ --dim:#c0bfb7;--line:rgba(240,238,232,.22);--acc:#dec397;
+ --on-accent:#211e18;--focus:#f0d1a1;--surface-hover:#32332f;
+}
+html[data-theme="light"]{
+ color-scheme:light;--paper:#f8f7f4;--card:#fffefa;--txt:#252421;
+ --dim:#575752;--line:rgba(37,36,33,.20);--acc:#70532d;
+ --on-accent:#fff;--focus:#70532d;--surface-hover:#fffdf9;
+}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.topTools{display:flex;align-items:center;gap:3px;min-width:0}
+.themeToggle{
+ min-height:44px;border:1px solid var(--line);border-radius:7px;
+ background:transparent;color:var(--txt);font-size:13px;font-weight:500;
+ line-height:1.2;padding:9px 11px;white-space:nowrap;
+}
+.themeToggle:hover{background:var(--surface-hover)}
+#vLang .langTheme{position:absolute;top:22px;inset-inline-end:22px;z-index:1}
+#vDone .doneTheme{display:block;margin-inline-start:auto;margin-bottom:14px}
+.pill{color:var(--txt);min-height:44px}
+.top .backRow{min-height:44px}
+.langBtn,.musCard,.expoCard,.work,.favBtn,.empty{background:var(--card);color:var(--txt)}
+.langBtn:hover,.musCard:hover,.expoCard:hover,.work:hover,.favBtn:hover{background:var(--surface-hover)}
+.langBtn{box-shadow:none}
+.expoCard .tag,.expoCard .dates,.expoCard .chip,.work .meta,.work .loc,.visitStats,.langNote,.hint,.legalFoot{color:var(--dim)}
+.expoCard .badge{color:var(--acc)}
+.playAll,.btnPrimary,.mailRow button{background:var(--acc);color:var(--on-accent)}
+.playAll svg{fill:currentColor}
+.resumeBtn{color:var(--acc);border-color:var(--acc);background:transparent}
+.workSearch,.mailRow input{background:var(--card);color:var(--txt);border-color:var(--line)}
+.workSearch::placeholder,.mailRow input::placeholder{color:var(--dim);opacity:1}
+.tourMode button,.btnGhost{background:var(--card);color:var(--txt);border-color:var(--line)}
+.tourMode button[aria-pressed="true"]{color:var(--acc);border-color:var(--acc)}
+.progressTrack{background:var(--line)}.progressFill{background:var(--acc)}
+.work.active,.favBtn.sel{background:color-mix(in srgb,var(--acc) 9%,var(--card))}
+.medal{border-color:var(--line);color:var(--acc)}
+.legalFoot a{color:var(--acc)}
+#vLang{background:var(--paper)}#vLang .brand{color:var(--acc)}
+#toast{max-width:calc(100vw - 32px);white-space:normal;text-align:center}
+#now :focus-visible,#mini :focus-visible{outline-color:#f0d1a1}
+#mini .mPlay,#now .ctrl.giant{color:#211e18}
+@media(max-width:390px){
+ .topTools{gap:1px}.top .pill{font-size:12px;padding:7px 6px}
+ .themeToggle{font-size:12px;padding:8px 9px}
+ .top{gap:5px}.backRow{font-size:14px}
+ #vLang .langTheme{top:13px;inset-inline-end:13px}
+}
+
 </style>
 </head>
 <body>
 
 <!-- 1 · Idioma -->
 <section id="vLang" aria-label="language selection">
+  <button class="themeToggle langTheme" type="button" data-theme-toggle></button>
   <div class="brand">MuseAudio</div>
   <h1 class="serif" id="langTitle">Votre visite, dans votre langue</h1>
   <p id="langSub">Choisissez la langue de votre parcours audio</p>
@@ -330,7 +390,7 @@ body{font-size:16px;line-height:1.6}
 <section class="view" id="vHome">
   <div class="top">
     <button class="brand" id="brandBtn">MuseAudio</button>
-    <button class="pill" id="langSwitch"></button>
+    <div class="topTools"><button class="pill" id="langSwitch"></button><button class="themeToggle" type="button" data-theme-toggle></button></div>
   </div>
   <div class="hero">
     <div class="eyebrow" data-i18n="heroEyebrow"></div>
@@ -351,7 +411,7 @@ body{font-size:16px;line-height:1.6}
 <section class="view" id="vMuseum">
   <div class="top">
     <button class="backRow" id="backHome">←&nbsp;<span data-i18n="back"></span></button>
-    <button class="pill" id="langSwitch2"></button>
+    <div class="topTools"><button class="pill" id="langSwitch2"></button><button class="themeToggle" type="button" data-theme-toggle></button></div>
   </div>
   <div class="eyebrow" id="musEyebrow"></div>
   <h1 class="serif" id="musTitle" style="font-size:clamp(26px,7vw,34px);margin:8px 0 2px"></h1>
@@ -364,7 +424,7 @@ body{font-size:16px;line-height:1.6}
 <section class="view" id="vExpo">
   <div class="top">
     <button class="backRow" id="backMus">←&nbsp;<span id="backMusTxt"></span></button>
-    <button class="pill" id="langSwitch3"></button>
+    <div class="topTools"><button class="pill" id="langSwitch3"></button><button class="themeToggle" type="button" data-theme-toggle></button></div>
   </div>
   <div class="eyebrow" id="expoEyebrow"></div>
   <h1 class="serif" id="expoTitle"></h1>
@@ -397,6 +457,7 @@ body{font-size:16px;line-height:1.6}
 
 <!-- 5 · Fin del recorrido -->
 <section class="view" id="vDone">
+  <button class="themeToggle doneTheme" type="button" data-theme-toggle></button>
   <div class="medal xl">✓</div>
   <h1 class="serif" id="doneTitle"></h1>
   <div class="stats" id="doneStats"></div>
@@ -694,10 +755,43 @@ const N=(obj)=>obj[lang]||obj.en||obj.fr; // nombre localizado con fallback
 
 /* ---------- tema ---------- */
 function setAccent(e){
-  const r=document.documentElement.style;
-  r.setProperty('--acc',e?e.accentUI:'#8a6428');
-  r.setProperty('--glow',e?e.accent:'#c8964b');
+ const r=document.documentElement.style;
+ if(e&&currentTheme()==='light')r.setProperty('--acc',e.accentUI);
+ else r.removeProperty('--acc');
+ r.setProperty('--glow',e?e.accent:'#c8964b');
 }
+
+const THEME_LABELS={
+ fr:['Mode clair','Mode sombre','Passer en mode clair','Passer en mode sombre'],
+ en:['Light mode','Dark mode','Switch to light mode','Switch to dark mode'],
+ es:['Modo claro','Modo oscuro','Cambiar al modo claro','Cambiar al modo oscuro'],
+ pt:['Modo claro','Modo escuro','Mudar para o modo claro','Mudar para o modo escuro'],
+ it:['Tema chiaro','Tema scuro','Passa al tema chiaro','Passa al tema scuro'],
+ ar:['الوضع الفاتح','الوضع الداكن','التبديل إلى الوضع الفاتح','التبديل إلى الوضع الداكن'],
+ zh:['浅色模式','深色模式','切换到浅色模式','切换到深色模式'],
+ tl:['Light mode','Dark mode','Switch to light mode','Switch to dark mode']
+};
+const currentTheme=()=>document.documentElement.dataset.theme==='light'?'light':'dark';
+function renderThemeButtons(){
+ const labels=THEME_LABELS[lang]||THEME_LABELS[(navigator.language||'fr').slice(0,2)]||THEME_LABELS.fr;
+ const dark=currentTheme()==='dark';
+ document.querySelectorAll('[data-theme-toggle]').forEach(b=>{
+  b.textContent=labels[dark?0:1];
+  b.setAttribute('aria-label',labels[dark?2:3]);
+  b.title=labels[dark?2:3];
+ });
+}
+function setTheme(next){
+ const mode=next==='light'?'light':'dark';
+ document.documentElement.dataset.theme=mode;
+ document.querySelector('meta[name="theme-color"]').content=mode==='light'?'#f8f7f4':'#20211f';
+ try{localStorage.setItem('ma_theme',mode)}catch(_){}
+ setAccent(expo);renderThemeButtons();
+}
+document.querySelectorAll('[data-theme-toggle]').forEach(b=>{
+ b.addEventListener('click',()=>setTheme(currentTheme()==='dark'?'light':'dark'));
+});
+
 /* ---------- vistas ---------- */
 function show(v){['vHome','vMuseum','vExpo','vDone'].forEach(x=>$('#'+x).classList.toggle('on',x===v));window.scrollTo(0,0);}
 function applyI18n(){
@@ -706,6 +800,7 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
   const sw=t('change')+' · '+lang.toUpperCase();
   ['langSwitch','langSwitch2','langSwitch3'].forEach(i=>$('#'+i).textContent=sw);
+  renderThemeButtons();
   $('#ttsNote').textContent=t('tts');
   $('#reorderHint').textContent=WORKS.length>1?t('reorder'):'';
   $('#footTxt').textContent=t('footTxt');
@@ -722,6 +817,7 @@ function buildLangScreen(){
   const gu=UI[guess]||UI.fr;
   $('#langTitle').textContent=gu.langTitle;
   $('#langSub').textContent=gu.langSub;
+  renderThemeButtons();
   LANGS.forEach(l=>{
     const b=document.createElement('button');
     b.className='langBtn';
