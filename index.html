@@ -273,6 +273,47 @@ ol.works{list-style:none}
 .legalFoot{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
   color:var(--dim);font-size:12.5px;line-height:1.6;text-align:center}
 .legalFoot a{color:var(--acc);text-decoration:none}
+
+/* Une interface éditoriale pour la visite au musée. */
+:root{--paper:#f8f7f4;--card:#fffefa;--txt:#252421;--dim:#575752;--line:rgba(37,36,33,.16);--acc:#70532d;--r:9px}
+body{font-size:16px;line-height:1.6}
+.view{max-width:600px;padding-inline:24px}
+.eyebrow{letter-spacing:.12em;color:var(--dim)}
+.top{padding-top:16px;margin-bottom:18px}
+.top .brand{letter-spacing:.09em;color:var(--txt);font-size:13px;font-weight:600}
+.pill{border-color:transparent;background:transparent;border-radius:6px;font-size:14px}
+.hero{padding:20px 0 0}
+.hero h1{font-size:clamp(31px,7.6vw,42px);line-height:1.2;margin:10px 0 16px;max-width:16ch}
+.hero p{font-size:16px;line-height:1.6;max-width:38ch}
+.how{border:0;margin:23px 0 16px;gap:10px}
+.step{border:0;padding:0;gap:12px;align-items:baseline}
+.step .n{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:12px;color:var(--dim);min-width:20px;text-align:left}
+.step b{font-size:14px;font-weight:500}.step span{display:none}
+.secTitle{font-size:23px;margin:30px 0 18px}
+.musCard,.expoCard{box-shadow:none;border:1px solid var(--line);border-radius:9px;background:var(--card);padding:20px;margin-bottom:12px;transition:border-color .15s}
+.musCard:hover,.expoCard:hover{border-color:var(--acc)}.musCard:active,.expoCard:active{transform:none}
+.musCard h3{font-size:22px;line-height:1.35;margin:8px 0 3px}.musCard .n,.musCard .go{font-size:13px;color:var(--dim);font-weight:400}
+.expoCard::before{display:none}.expoCard h2{padding-inline-end:0;margin:7px 0 8px;font-size:22px;line-height:1.32}.expoCard .eyebrow{color:var(--dim)}
+.expoCard .tag{font-size:14px;line-height:1.5}.expoCard .dates{font-size:13px}
+.expoCard .chips{gap:0}.chip{border:0;padding:0;color:var(--dim);font-size:12px;letter-spacing:0}.chip:not(:last-child)::after{content:' · ';white-space:pre}
+.badge{position:static;display:inline-block;letter-spacing:0;text-transform:none;padding:0;background:transparent;border:0;border-radius:0;color:var(--acc);font-size:13px;font-weight:500}
+#vExpo h1{font-size:clamp(27px,6.8vw,35px);line-height:1.25;margin:8px 0}
+#vExpo .sub,.langNote{font-size:14px;line-height:1.5}
+.progressBox{margin-top:22px}.progressTop{font-size:13px;gap:12px}.progressTrack{height:3px}.progressFill.done{background:var(--acc)}
+.actions{margin:20px 0 18px}.playAll{border-radius:9px;box-shadow:none;min-height:52px;font-size:15px}
+.visitTools{gap:10px;margin:18px 0 20px}.visitStats{font-size:13px;line-height:1.65}.resumeBtn{border-radius:9px;background:transparent}.workSearch{border-radius:9px}.tourMode button{border-radius:8px}
+.work{border-radius:8px;box-shadow:none;padding:14px 4px 14px 13px;gap:13px;margin-bottom:8px}
+.work.active{background:color-mix(in srgb,var(--acc) 4%,var(--card))}.work h3{font-size:18px;line-height:1.35}.work .meta{font-size:13px;line-height:1.45;margin-top:4px}
+.medal{background:transparent;border-width:1px;border-color:var(--line);color:var(--acc)}.medal.s{width:39px;height:39px;font-size:16px}.medal.xl{width:112px;height:112px}
+.hint{font-size:13px;text-align:left}.empty{border:1px solid var(--line);border-radius:8px;background:var(--card)}
+#mini{max-width:560px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.17);background:#252522;backdrop-filter:none}#mini .mPlay{border-radius:9px;background:#d3b27c}
+#now{background:#20211f;transition:transform .2s ease-out}#now .nExpo{letter-spacing:.08em;font-size:12px}#now .medal{background:transparent;border-color:rgba(239,234,224,.25)}#now .ctrl.giant{background:#d3b27c}
+#transcript{background:#252522;backdrop-filter:none;border-radius:9px;line-height:1.65}
+.favBtn{border-radius:9px;box-shadow:none}.btnPrimary,.btnGhost{border-radius:10px}
+.legalFoot{border:0;padding:12px 0 0;text-align:left;font-size:13px}.legalFoot a{text-decoration:underline;text-underline-offset:2px}
+@media(max-width:380px){.view{padding-inline:17px}.expoCard,.musCard{padding-inline:15px}.work{gap:9px}}
+@media(prefers-reduced-motion:reduce){#now{transition:none}}
+
 </style>
 </head>
 <body>
@@ -297,9 +338,9 @@ ol.works{list-style:none}
     <p data-i18n="heroSub"></p>
   </div>
   <div class="how">
-    <div class="step"><div class="n">I</div><div><b data-i18n="s1"></b><span data-i18n="s1s"></span></div></div>
-    <div class="step"><div class="n">II</div><div><b data-i18n="s2"></b><span data-i18n="s2s"></span></div></div>
-    <div class="step"><div class="n">III</div><div><b data-i18n="s3"></b><span data-i18n="s3s"></span></div></div>
+    <div class="step"><div class="n">01</div><div><b data-i18n="s1"></b></div></div>
+    <div class="step"><div class="n">02</div><div><b data-i18n="s2"></b></div></div>
+    
   </div>
   <h2 class="secTitle" data-i18n="museums"></h2>
   <div id="musCards"></div>
@@ -714,10 +755,7 @@ function renderHome(){
     card.onclick=()=>openMuseum(m.id,true);
     c.appendChild(card);
   });
-  const soon=document.createElement('div');
-  soon.className='musCard soonCard';
-  soon.innerHTML=`<h3 style="color:var(--dim)">${t('moreMuseums')}</h3>`;
-  c.appendChild(soon);
+
 }
 
 /* ---------- museo ---------- */
