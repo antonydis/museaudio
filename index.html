@@ -700,7 +700,7 @@ function setLang(code){
 const askLang=()=>$('#vLang').classList.add('on');
 ['langSwitch','langSwitch2','langSwitch3'].forEach(i=>$('#'+i).onclick=askLang);
 $('#brandBtn').onclick=goHome;
-function goHome(){museum=null;expo=null;expoId=null;setAccent(null);history.replaceState(null,'','#');show('vHome');renderHome();}
+function goHome(){stopNarration();closePlayer();$('#mini').classList.remove('open');idx=-1;museum=null;expo=null;expoId=null;setAccent(null);history.replaceState(null,'','#');show('vHome');renderHome();}
 
 /* ---------- landing ---------- */
 function renderHome(){
@@ -854,7 +854,18 @@ function renderList(){
       <div class="eqIcon"><span></span><span></span><span></span></div>
       <button class="handle" aria-label="reorder">≡</button>`;
     li.onclick=e=>{if(!e.target.closest('.handle'))playIndex(i,true);};
-    li.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();playIndex(i,true);}};
+    li.onkeydown=e=>{if(e.target.closest('.handle'))return;if(e.key==='Enter'||e.key===' '){e.preventDefault();playIndex(i,true);}};
+    const handle=li.querySelector('.handle');
+    handle.setAttribute('aria-label',lang==='fr'?'Réorganiser : flèches haut et bas':lang==='es'?'Reordenar: flechas arriba y abajo':'Reorder: up/down arrows');
+    handle.addEventListener('keydown',e=>{
+      if(!['ArrowUp','ArrowDown'].includes(e.key)||shortTour||q)return;
+      e.preventDefault();e.stopPropagation();
+      const delta=e.key==='ArrowUp'?-1:1,nextIndex=i+delta;
+      if(nextIndex<0||nextIndex>=WORKS.length)return;
+      const moved=WORKS.splice(i,1)[0];WORKS.splice(nextIndex,0,moved);
+      localStorage.setItem('ma_order_'+expoId,JSON.stringify(WORKS.map(w=>w.id)));
+      renderList();$('#worksList').querySelectorAll('.work')[nextIndex]?.querySelector('.handle')?.focus();
+    });
     ol.appendChild(li);
   });
   if(!q&&!shortTour)enableDrag(ol);else ol.querySelectorAll('.handle').forEach(b=>b.hidden=true);markActive();
@@ -943,7 +954,7 @@ function startTTS(w){
   ttsEstDuration=estimateSpeechSeconds(w.txt[wl],speed);
   ttsElapsedBase=0; ttsStart=Date.now();
   startTtsClock();
-  u.onend=()=>{stopTtsClock();markPlayed(w);updateUI();next();};
+  u.onend=()=>{if(!usingTTS||WORKS[idx]?.id!==w.id)return;stopTtsClock();markPlayed(w);updateUI();next();};
   speechSynthesis.speak(u);
   updateUI();
 }
@@ -968,7 +979,7 @@ function togglePlay(){
 const next=()=>{
   const tour=inTour(),pos=tour.indexOf(WORKS[idx]);
   const reachedEnd = pos>=tour.length-1;
-  if(!reachedEnd && !pendingAutoDone){playIndex(WORKS.indexOf(tour[pos+1]),false);return;}
+  if(!reachedEnd){playIndex(WORKS.indexOf(tour[pos+1]),false);return;}
   stopNarration();ambient.pause();updateUI();
   pendingAutoDone=false;
   showDone();
