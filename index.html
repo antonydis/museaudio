@@ -12,14 +12,10 @@
 <meta property="og:site_name" content="MuseAudio">
 <meta property="og:title" content="MuseAudio — Le musée, dans votre langue">
 <meta property="og:description" content="Audioguide multilingue et gratuit pour vos visites au musée. Écoutez chaque œuvre, le téléphone dans la poche.">
-<meta property="og:image" content="https://antonydis.github.io/museaudio/social-preview.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta property="og:url" content="https://antonydis.github.io/museaudio/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MuseAudio — Le musée, dans votre langue">
 <meta name="twitter:description" content="Audioguide multilingue et gratuit pour vos visites au musée.">
-<meta name="twitter:image" content="https://antonydis.github.io/museaudio/social-preview.png">
 
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -627,7 +623,7 @@ tl:{heroEyebrow:'Multilingguwal na audio guide',heroTitle:'Ang museo, sa wika mo
 const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
 
 /* ---------- estado ---------- */
-const WEBHOOK_URL='';  // ← webhook n8n para métricas anónimas y correos (vacío = solo localStorage)
+const WEBHOOK_URL=''; // no se recolectan datos ni correos mientras no exista backend
 const AUDIO_BASE='https://pub-6743cdc0452c4c1e88980e6c81a0c5b9.r2.dev';  // Cloudflare R2 · bucket museaudio-audio
 const DATA=window.MA;
 let museum=null,expo=null,expoId=null,WORKS=[],idx=-1,speed=1,ambientOn=false,usingTTS=false;
@@ -997,7 +993,7 @@ function setMediaSession(w,i){
     title:numeral(i)+' · '+wMeta(w).t,
     artist:N(expo.title),
     album:'MuseAudio',
-    artwork:[{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]
+    artwork:[{src:'icon/icon-512.png',sizes:'512x512',type:'image/png'}]
   });
   navigator.mediaSession.setActionHandler('play',togglePlay);
   navigator.mediaSession.setActionHandler('pause',togglePlay);
