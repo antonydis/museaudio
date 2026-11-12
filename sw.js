@@ -1,7 +1,7 @@
 /* MuseAudio SW — v2
    - App shell y datos: network-first (siempre lo más fresco si hay red)
    - Audios: cache-first (una vez escuchado, funciona sin WiFi de museo) */
-const VERSION = 'museaudio-v4';
+const VERSION = 'museaudio-shell-v6';
 const SHELL = ['./', 'index.html', 'manifest.json'];
 
 self.addEventListener('install', e => {
@@ -9,13 +9,13 @@ self.addEventListener('install', e => {
 });
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('museaudio-') && k !== VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (url.origin !== location.origin) return; // fuentes de Google, etc.: comportamiento normal
+  if (url.origin !== location.origin) return; // external media is not cached by this worker
 
   if (url.pathname.includes('/audio/')) {
     // cache-first para MP3
@@ -33,7 +33,7 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       fetch(e.request).then(res => {
         const copy = res.clone();
-        caches.open(VERSION).then(c => c.put(e.request, copy));
+        if (res.ok) caches.open(VERSION).then(c => c.put(e.request, copy));
         return res;
       }).catch(() => caches.match(e.request))
     );
